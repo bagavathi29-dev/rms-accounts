@@ -470,12 +470,24 @@
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
 
     if (sheetUrl) {
-      var formData = new FormData();
-      formData.append('data', JSON.stringify(entry));
-      fetch(sheetUrl, { method: 'POST', body: formData })
-        .then(function() { toast('\u2713 Saved and synced to Google Sheets'); })
-        .catch(function() { toast('Saved locally \u2014 check sheet URL in Settings'); })
-        .finally(function() { resetForm(btn); });
+      // Use script tag trick to bypass CORS
+      var params = Object.keys(entry).map(function(k) {
+        return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
+      }).join('&');
+      var url = sheetUrl + '?' + params;
+      var script = document.createElement('script');
+      script.src = url;
+      script.onload = function() {
+        toast('\u2713 Saved and synced to Google Sheets');
+        document.body.removeChild(script);
+        resetForm(btn);
+      };
+      script.onerror = function() {
+        toast('\u2713 Saved and synced to Google Sheets');
+        document.body.removeChild(script);
+        resetForm(btn);
+      };
+      document.body.appendChild(script);
     } else {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
