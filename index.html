@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RMS Fetal Diagnostics</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f3ef; --surface: #ffffff; --surface2: #f0ede8;
+    --border: #e2ddd7; --text: #1a1916; --muted: #7a7570; --hint: #b0aa9f;
+    --accent: #2c5f3f; --accent-light: #e8f2ec; --accent-text: #1e4a2e;
+    --danger: #c0392b; --danger-light: #fdf0ee;
+    --warn: #b8610a; --warn-light: #fef6ee;
+    --gpay: #1a56db; --gpay-light: #eef3fd;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px 60px; }
+  .app { max-width: 480px; margin: 0 auto; }
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+  .header-title { font-size: 20px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .sync-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; margin-top: 4px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--hint); transition: background 0.3s; }
+  .dot.connected { background: #27ae60; }
+  .tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; margin-bottom: 20px; gap: 2px; }
+  .tab { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--muted); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:not(.active):hover { background: var(--surface2); color: var(--text); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hint); margin-bottom: 10px; margin-top: 20px; }
+  .section-label:first-child { margin-top: 0; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  .field input, .field select { width: 100%; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; transition: border-color 0.15s; appearance: none; }
+  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,95,63,0.08); }
+  .field input::placeholder { color: var(--hint); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .submit-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: opacity 0.15s, transform 0.1s; }
+  .submit-btn:hover { opacity: 0.9; } .submit-btn:active { transform: scale(0.99); } .submit-btn:disabled { opacity: 0.4; cursor: default; }
+  .error-msg { font-size: 12px; color: var(--danger); margin-top: 10px; display: none; background: var(--danger-light); padding: 8px 12px; border-radius: var(--radius-sm); }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 12px; text-align: center; }
+  .stat-val { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
+  .stat-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hint); margin-top: 3px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .filter-row select { flex: 1; padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); outline: none; appearance: none; }
+  .entry-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+  .entry-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .entry-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .entry-amount { font-size: 16px; font-weight: 600; color: var(--accent-text); font-family: 'DM Mono', monospace; }
+  .entry-meta { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .entry-time { font-size: 11px; color: var(--hint); font-family: 'DM Mono', monospace; margin-top: 4px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-right: 4px; }
+  .badge-cash { background: var(--accent-light); color: var(--accent-text); }
+  .badge-gpay { background: var(--gpay-light); color: var(--gpay); }
+  .empty-state { text-align: center; padding: 50px 0; color: var(--hint); font-size: 13px; }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+  .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .settings-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+  .info-box { background: var(--warn-light); border: 1px solid #f0c080; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; line-height: 1.8; color: var(--warn); margin-bottom: 12px; }
+  .info-box strong { color: #7a4000; }
+  .url-row { display: flex; gap: 8px; }
+  .url-row input { flex: 1; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); outline: none; }
+  .save-btn { padding: 9px 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .save-btn:hover { opacity: 0.88; }
+  .url-msg { font-size: 12px; margin-top: 7px; }
+  .code-box { background: #1a1916; border-radius: var(--radius-sm); padding: 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: #c8c0b4; line-height: 1.8; white-space: pre; overflow-x: auto; margin-bottom: 10px; }
+  .code-kw { color: #8ba8e0; } .code-fn { color: #e8c57a; } .code-str { color: #96c87a; } .code-var { color: #c0a0e8; }
+  .copy-btn { padding: 8px 16px; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; }
+  .copy-btn:hover { background: var(--surface2); }
+  .danger-btn { padding: 9px 16px; background: transparent; color: var(--danger); border: 1px solid #e8b4b0; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  .danger-btn:hover { background: var(--danger-light); }
+  .pin-overlay { display: none; position: fixed; inset: 0; background: rgba(26,25,22,0.6); z-index: 100; align-items: center; justify-content: center; }
+  .pin-overlay.show { display: flex; }
+  .pin-box { background: var(--surface); border-radius: var(--radius); padding: 28px 24px; width: 300px; text-align: center; }
+  .pin-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .pin-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .pin-error { font-size: 12px; color: var(--danger); min-height: 20px; margin-bottom: 10px; }
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .pin-key { padding: 14px 0; font-size: 18px; font-weight: 500; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; color: var(--text); transition: all 0.1s; user-select: none; }
+  .pin-key:hover { background: var(--border); } .pin-key:active { transform: scale(0.95); }
+  .pin-key.wide { font-size: 13px; color: var(--muted); }
+  .pin-cancel { font-size: 12px; color: var(--muted); cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; padding: 4px 0; }
+  .pin-cancel:hover { color: var(--text); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: #1a1916; color: #f0ede8; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  select { cursor: pointer; }
+
+  .delete-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--hint); font-size: 16px; padding: 2px 6px;
+    border-radius: var(--radius-sm); transition: all 0.15s;
+    line-height: 1; flex-shrink: 0;
+  }
+  .delete-btn:hover { color: var(--danger); background: var(--danger-light); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div>
+      <div class="header-title">RMS Fetal Diagnostics</div>
+      <div class="header-sub">Sri Mahalakshmi Scan Service &mdash; Daily Accounts</div>
+    </div>
+    <div class="sync-badge">
+      <div class="dot" id="dot"></div>
+      <span id="sync-label">Not connected</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('form')">&#43; New Entry</div>
+    <div class="tab" onclick="switchTab('log')">&#9776; Log</div>
+    <div class="tab" onclick="switchTab('settings')">&#9881; Settings</div>
+  </div>
+
+  <!-- FORM -->
+  <div class="panel active" id="panel-form">
+    <div class="section-label">Patient details</div>
+    <div class="field">
+      <label for="patientName">Patient name</label>
+      <input type="text" id="patientName" placeholder="Full name" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="doctorName">Referred doctor</label>
+      <input type="text" id="doctorName" placeholder="Dr. name" autocomplete="off" />
+    </div>
+    <div class="section-label">Payment details</div>
+    <div class="grid2">
+      <div class="field">
+        <label for="amountPaid">Amount paid (&#8377;)</label>
+        <input type="number" id="amountPaid" placeholder="0" min="0" step="1" />
+      </div>
+      <div class="field">
+        <label for="paymentMethod">Payment method</label>
+        <select id="paymentMethod">
+          <option value="">Select...</option>
+          <option value="Cash">Cash</option>
+          <option value="GPay">GPay</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="collectedBy">Collected by</label>
+      <input type="text" id="collectedBy" list="staffList" placeholder="Type to search staff..." autocomplete="off" />
+      <datalist id="staffList">
+        <option value="Dr. Muthiah"></option>
+        <option value="Dr. Adaikkappan"></option>
+        <option value="Banu"></option>
+        <option value="Priya"></option>
+        <option value="Uma"></option>
+        <option value="Srinidhi"></option>
+      </datalist>
+    </div>
+    <div class="error-msg" id="form-error"></div>
+    <button class="submit-btn" id="submitBtn" onclick="submitEntry()">Save &amp; Sync to Google Sheets</button>
+  </div>
+
+  <!-- LOG -->
+  <div class="panel" id="panel-log">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);" id="log-date-heading">Today</div>
+        <div style="font-size:11px;color:var(--hint);margin-top:1px;" id="log-date-sub">Showing today's entries only</div>
+      </div>
+      <button id="view-all-btn" style="font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-light);border:none;border-radius:20px;padding:5px 14px;cursor:pointer;">View all</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val" id="stat-total">&#8377;0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-count">0</div><div class="stat-lbl">Entries</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-cash">&#8377;0</div><div class="stat-lbl">Cash</div></div>
+    </div>
+    <div class="filter-row">
+      <select id="filterMethod">
+        <option value="">All methods</option>
+        <option value="Cash">Cash only</option>
+        <option value="GPay">GPay only</option>
+      </select>
+    </div>
+    <div id="log-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+
+    <div class="settings-card">
+      <div class="settings-card-title">Step 1 &mdash; Paste script into Apps Script</div>
+      <div class="info-box">
+        <strong>How to open Apps Script:</strong><br>
+        Open your Google Sheet &rarr; click <strong>Extensions</strong> &rarr; click <strong>Apps Script</strong>.<br>
+        Delete all existing code, then paste the script below.
+      </div>
+      <div class="code-box"><span class="code-kw">function</span> <span class="code-fn">doPost</span>(e) {
+  <span class="code-kw">var</span> <span class="code-var">sheet</span> = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getActiveSheet();
+  <span class="code-kw">var</span> <span class="code-var">data</span> = JSON.parse(e.postData.contents);
+  <span class="code-kw">if</span> (<span class="code-var">sheet</span>.getLastRow() === 0) {
+    <span class="code-var">sheet</span>.appendRow([
+      <span class="code-str">"Timestamp"</span>, <span class="code-str">"Patient"</span>, <span class="code-str">"Doctor"</span>,
+      <span class="code-str">"Amount"</span>, <span class="code-str">"Method"</span>, <span class="code-str">"Collected By"</span>
+    ]);
+  }
+  <span class="code-var">sheet</span>.appendRow([
+    <span class="code-var">data</span>.timestamp, <span class="code-var">data</span>.patient,
+    <span class="code-var">data</span>.doctor, <span class="code-var">data</span>.amount,
+    <span class="code-var">data</span>.method, <span class="code-var">data</span>.collectedBy
+  ]);
+  <span class="code-kw">return</span> ContentService
+    .createTextOutput(JSON.stringify({status:<span class="code-str">"ok"</span>}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+      <button class="copy-btn" onclick="copyScript()">&#10697; Copy script</button>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">Step 2 &mdash; Deploy &amp; paste the URL</div>
+      <div class="info-box">
+        Click <strong>Deploy</strong> &rarr; <strong>New deployment</strong> &rarr; type: <strong>Web App</strong> &rarr; Execute as <strong>Me</strong> &rarr; Who has access: <strong>Anyone</strong> &rarr; Deploy &rarr; copy the URL.
+      </div>
+      <div class="url-row">
+        <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+        <button class="save-btn" onclick="saveUrl()">Save</button>
+      </div>
+      <div class="url-msg" id="url-msg"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">Staff PIN <span style="font-size:11px;font-weight:400;color:var(--hint);">(unlocks Log tab)</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">1111</strong> &mdash; share with staff so they can view today's log.</div>
+      <div class="field" style="margin-bottom:8px;">
+        <label for="newStaffPin">New staff PIN (4 digits)</label>
+        <input type="password" id="newStaffPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Enter 4-digit PIN" />
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label for="newStaffPinConfirm">Confirm staff PIN</label>
+        <input type="password" id="newStaffPinConfirm" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Re-enter PIN" />
+      </div>
+      <button class="save-btn" onclick="saveStaffPin()">Save Staff PIN</button>
+      <div id="staff-pin-msg" style="font-size:12px;margin-top:7px;"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">Admin PIN <span style="font-size:11px;font-weight:400;color:var(--hint);">(unlocks View all &amp; Settings)</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">1234</strong> &mdash; keep this only for yourself.</div>
+      <div class="field" style="margin-bottom:8px;">
+        <label for="newAdminPin">New admin PIN (4 digits)</label>
+        <input type="password" id="newAdminPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Enter 4-digit PIN" />
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label for="newAdminPinConfirm">Confirm admin PIN</label>
+        <input type="password" id="newAdminPinConfirm" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Re-enter PIN" />
+      </div>
+      <button class="save-btn" onclick="saveAdminPin()">Save Admin PIN</button>
+      <div id="admin-pin-msg" style="font-size:12px;margin-top:7px;"></div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-title">Clear local data</div>
+      <button class="danger-btn" onclick="clearLog()">&#10006; Clear all entries from this device</button>
+      <p style="font-size:11px;color:var(--hint);margin-top:8px;">This only clears the local copy. Your Google Sheet data is not affected.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- PIN Modal -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div class="pin-title" id="pinTitle">Access required</div>
+    <div class="pin-sub" id="pinSub">Enter your PIN to continue</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-grid">
+      <div class="pin-key" onclick="pinKey('1')">1</div>
+      <div class="pin-key" onclick="pinKey('2')">2</div>
+      <div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div>
+      <div class="pin-key" onclick="pinKey('5')">5</div>
+      <div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div>
+      <div class="pin-key" onclick="pinKey('8')">8</div>
+      <div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key wide" onclick="pinClear()">&#9003;</div>
+      <div class="pin-key" onclick="pinKey('0')">0</div>
+      <div class="pin-key wide" onclick="pinCancel()">&#10006;</div>
+    </div>
+    <button class="pin-cancel" onclick="pinCancel()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var entries = [];
+  var sheetUrl = '';
+  var viewAll = false;
+  var pinBuffer = '';
+  var pendingAction = null;
+  var staffUnlocked = false;
+  var adminUnlocked = false;
+  var DEFAULT_STAFF_PIN = '1111';
+  var DEFAULT_ADMIN_PIN = '1234';
+
+  function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
+  function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
+
+  function init() {
+    try { entries = JSON.parse(localStorage.getItem('clinic_entries') || '[]'); } catch(e) { entries = []; }
+    try { sheetUrl = localStorage.getItem('clinic_sheet_url') || ''; } catch(e) {}
+    if (sheetUrl) { document.getElementById('sheetUrl').value = sheetUrl; setConnected(true); }
+    document.getElementById('filterMethod').addEventListener('change', renderLog);
+    document.getElementById('view-all-btn').addEventListener('click', toggleViewAll);
+    // Require PIN on first load
+    if (!staffUnlocked) { pendingAction = 'form'; showPinModal('staff'); }
+  }
+
+  /* ---- Tab switching ---- */
+  function lockAndSwitch(name) {
+    staffUnlocked = false;
+    adminUnlocked = false;
+    viewAll = false;
+    document.getElementById('view-all-btn').textContent = 'View all';
+    document.getElementById('log-date-sub').textContent = "Showing today's entries only";
+    doSwitchTab(name);
+  }
+
+  function switchTab(name) {
+    if ((name === 'form' || name === 'log') && !staffUnlocked) { pendingAction = name; showPinModal('staff'); return; }
+    if (name === 'settings' && !adminUnlocked) { pendingAction = 'settings'; showPinModal('admin'); return; }
+    doSwitchTab(name);
+  }
+
+  function doSwitchTab(name) {
+    document.querySelectorAll('.tab').forEach(function(t, i) {
+      t.classList.toggle('active', ['form','log','settings'][i] === name);
+    });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'log') renderLog();
+  }
+
+  /* ---- View All ---- */
+  function toggleViewAll() {
+    if (viewAll) {
+      viewAll = false;
+      document.getElementById('view-all-btn').textContent = 'View all';
+      document.getElementById('log-date-sub').textContent = "Showing today's entries only";
+      renderLog();
+    } else {
+      pendingAction = 'viewall';
+      showPinModal('admin');
+    }
+  }
+
+  /* ---- PIN modal ---- */
+  function showPinModal(level) {
+    pinBuffer = '';
+    updatePinDots();
+    document.getElementById('pinError').textContent = '';
+    if (level === 'staff') {
+      document.getElementById('pinTitle').textContent = 'Staff access';
+      document.getElementById('pinSub').textContent = "Enter staff PIN to view today's log";
+    } else {
+      document.getElementById('pinTitle').textContent = 'Admin access';
+      document.getElementById('pinSub').textContent = 'Enter admin PIN to continue';
+    }
+    document.getElementById('pinOverlay').classList.add('show');
+  }
+
+  function pinKey(digit) {
+    if (pinBuffer.length >= 4) return;
+    pinBuffer += digit;
+    updatePinDots();
+    if (pinBuffer.length === 4) setTimeout(checkPin, 150);
+  }
+
+  function pinClear() { pinBuffer = pinBuffer.slice(0, -1); updatePinDots(); document.getElementById('pinError').textContent = ''; }
+
+  function pinCancel() { pinBuffer = ''; pendingAction = null; updatePinDots(); document.getElementById('pinOverlay').classList.remove('show'); }
+
+  function updatePinDots() {
+    for (var i = 0; i < 4; i++) document.getElementById('pd' + i).classList.toggle('filled', i < pinBuffer.length);
+  }
+
+  function checkPin() {
+    var action = pendingAction;
+    var staffOk = pinBuffer === getStaffPin();
+    var adminOk = pinBuffer === getAdminPin();
+
+    if ((action === 'log' || action === 'form') && (staffOk || adminOk)) {
+      staffUnlocked = true;
+      if (adminOk) adminUnlocked = true;
+      pendingAction = null;
+      document.getElementById('pinOverlay').classList.remove('show');
+      doSwitchTab('log');
+      toast('Access granted');
+
+    } else if (action === 'viewall' && adminOk) {
+      adminUnlocked = true; viewAll = true; pendingAction = null;
+      document.getElementById('pinOverlay').classList.remove('show');
+      document.getElementById('view-all-btn').textContent = 'Today only';
+      document.getElementById('log-date-sub').textContent = 'Showing all entries';
+      renderLog();
+      toast('Admin access granted');
+
+    } else if (action === 'settings' && adminOk) {
+      adminUnlocked = true; pendingAction = null;
+      document.getElementById('pinOverlay').classList.remove('show');
+      doSwitchTab('settings');
+      toast('Admin access granted');
+
+    } else {
+      document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
+      pinBuffer = '';
+      updatePinDots();
+    }
+  }
+
+  /* ---- Helpers ---- */
+  function setConnected(yes) {
+    document.getElementById('dot').className = 'dot' + (yes ? ' connected' : '');
+    document.getElementById('sync-label').textContent = yes ? 'Connected' : 'Not connected';
+  }
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 2500);
+  }
+
+  /* ---- Form ---- */
+  function submitEntry() {
+    var patient     = document.getElementById('patientName').value.trim();
+    var doctor      = document.getElementById('doctorName').value.trim();
+    var amount      = document.getElementById('amountPaid').value.trim();
+    var method      = document.getElementById('paymentMethod').value;
+    var collectedBy = document.getElementById('collectedBy').value.trim();
+    var errEl       = document.getElementById('form-error');
+
+    if (!patient || !doctor || !amount || !method || !collectedBy) {
+      errEl.textContent = 'Please fill in all fields before saving.'; errEl.style.display = 'block'; return;
+    }
+    errEl.style.display = 'none';
+
+    var now = new Date();
+    var entry = {
+      timestamp:   now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      dateKey:     now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      patient: patient, doctor: doctor,
+      amount:  parseFloat(amount).toFixed(2),
+      method:  method, collectedBy: collectedBy
+    };
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    entries.unshift(entry);
+    try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
+
+    if (sheetUrl) {
+      fetch(sheetUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) })
+        .then(function() { toast('\u2713 Saved and synced to Google Sheets'); })
+        .catch(function() { toast('Saved locally \u2014 check sheet URL in Settings'); })
+        .finally(function() { resetForm(btn); });
+    } else {
+      toast('Saved locally \u2014 connect Google Sheets in Settings');
+      resetForm(btn);
+    }
+  }
+
+  function resetForm(btn) {
+    btn.disabled = false; btn.textContent = 'Save & Sync to Google Sheets';
+    ['patientName','doctorName','amountPaid','collectedBy'].forEach(function(id) { document.getElementById(id).value = ''; });
+    document.getElementById('paymentMethod').value = '';
+  }
+
+  /* ---- Log ---- */
+  function getTodayKey() { return new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }); }
+
+  function renderLog() {
+    var today      = getTodayKey();
+    var todayLabel = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' });
+    var filter     = document.getElementById('filterMethod').value;
+    var base       = viewAll ? entries : entries.filter(function(e) {
+      var dk = e.dateKey || (e.timestamp ? e.timestamp.split(',')[0].trim() : '');
+      return dk === today;
+    });
+    var filtered = filter ? base.filter(function(e) { return e.method === filter; }) : base;
+    var total = 0, cash = 0;
+    base.forEach(function(e) { var a = parseFloat(e.amount); total += a; if (e.method === 'Cash') cash += a; });
+    document.getElementById('stat-total').textContent = '\u20B9' + total.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    document.getElementById('stat-count').textContent = base.length;
+    document.getElementById('stat-cash').textContent  = '\u20B9' + cash.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    document.getElementById('log-date-heading').textContent = viewAll ? 'All entries' : 'Today \u2014 ' + todayLabel;
+    var list = document.getElementById('log-list');
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div>' + (viewAll ? 'No entries found.' : 'No entries for today yet.') + '</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(function(e, idx) {
+      var bc = e.method === 'GPay' ? 'badge-gpay' : 'badge-cash';
+      var realIdx = entries.indexOf(e);
+      var delBtn = adminUnlocked
+        ? '<button class="delete-btn" onclick="deleteEntry(' + realIdx + ')" title="Delete entry">&#10005;</button>'
+        : '';
+      return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">' + e.patient +
+        '</div><div class="entry-amount">' +
+        '\u20B9' + parseFloat(e.amount).toLocaleString('en-IN') +
+        '</div>' + delBtn + '</div><div class="entry-meta"><span class="badge ' + bc + '">' + e.method + '</span>Dr. ' +
+        e.doctor + ' &nbsp;&middot;&nbsp; ' + e.collectedBy +
+        '</div><div class="entry-time">' + e.timestamp + '</div></div>';
+    }).join('');
+  }
+
+  /* ---- Settings actions ---- */
+  function saveUrl() {
+    var url = document.getElementById('sheetUrl').value.trim();
+    var msg = document.getElementById('url-msg');
+    if (!url.startsWith('https://script.google.com')) { msg.style.color = 'var(--danger)'; msg.textContent = 'Please paste a valid Apps Script URL.'; return; }
+    try { localStorage.setItem('clinic_sheet_url', url); } catch(e) {}
+    sheetUrl = url; setConnected(true);
+    msg.style.color = 'var(--accent)'; msg.textContent = 'URL saved! The app is now connected.';
+    toast('Sheet URL saved \u2713');
+  }
+
+  function saveStaffPin() {
+    var p1 = document.getElementById('newStaffPin').value.trim();
+    var p2 = document.getElementById('newStaffPinConfirm').value.trim();
+    var msg = document.getElementById('staff-pin-msg');
+    if (!/^[0-9]{4}$/.test(p1)) { msg.style.color = 'var(--danger)'; msg.textContent = 'PIN must be exactly 4 digits.'; return; }
+    if (p1 !== p2) { msg.style.color = 'var(--danger)'; msg.textContent = 'PINs do not match.'; return; }
+    try { localStorage.setItem('clinic_staff_pin', p1); } catch(e) {}
+    document.getElementById('newStaffPin').value = ''; document.getElementById('newStaffPinConfirm').value = '';
+    msg.style.color = 'var(--accent)'; msg.textContent = 'Staff PIN updated!';
+    toast('Staff PIN changed \u2713');
+  }
+
+  function saveAdminPin() {
+    var p1 = document.getElementById('newAdminPin').value.trim();
+    var p2 = document.getElementById('newAdminPinConfirm').value.trim();
+    var msg = document.getElementById('admin-pin-msg');
+    if (!/^[0-9]{4}$/.test(p1)) { msg.style.color = 'var(--danger)'; msg.textContent = 'PIN must be exactly 4 digits.'; return; }
+    if (p1 !== p2) { msg.style.color = 'var(--danger)'; msg.textContent = 'PINs do not match.'; return; }
+    try { localStorage.setItem('clinic_admin_pin', p1); } catch(e) {}
+    document.getElementById('newAdminPin').value = ''; document.getElementById('newAdminPinConfirm').value = '';
+    msg.style.color = 'var(--accent)'; msg.textContent = 'Admin PIN updated!';
+    toast('Admin PIN changed \u2713');
+  }
+
+  function copyScript() {
+    var code = 'function doPost(e) {\n  var sheet = SpreadsheetApp\n    .getActiveSpreadsheet()\n    .getActiveSheet();\n  var data = JSON.parse(e.postData.contents);\n  if (sheet.getLastRow() === 0) {\n    sheet.appendRow(["Timestamp","Patient","Doctor","Amount","Method","Collected By"]);\n  }\n  sheet.appendRow([data.timestamp,data.patient,data.doctor,data.amount,data.method,data.collectedBy]);\n  return ContentService.createTextOutput(JSON.stringify({status:"ok"})).setMimeType(ContentService.MimeType.JSON);\n}';
+    navigator.clipboard.writeText(code).then(function() { toast('Script copied!'); }).catch(function() { toast('Copy manually from the code box.'); });
+  }
+
+  function deleteEntry(idx) {
+    var entry = entries[idx];
+    if (!entry) return;
+    if (!confirm('Delete entry for ' + entry.patient + ' (\u20B9' + entry.amount + ')? This cannot be undone locally.')) return;
+    entries.splice(idx, 1);
+    try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
+    renderLog();
+    toast('Entry deleted');
+  }
+
+  function clearLog() {
+    if (!confirm('Clear all local entries? Your Google Sheet data will not be affected.')) return;
+    entries = [];
+    try { localStorage.removeItem('clinic_entries'); } catch(e) {}
+    renderLog(); toast('Local log cleared');
+  }
+
+  init();
+</script>
+</body>
+</html>
