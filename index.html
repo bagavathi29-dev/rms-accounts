@@ -226,7 +226,7 @@
         Click <strong>Deploy</strong> &rarr; <strong>New deployment</strong> &rarr; type: <strong>Web App</strong> &rarr; Execute as <strong>Me</strong> &rarr; Who has access: <strong>Anyone</strong> &rarr; Deploy &rarr; copy the URL.
       </div>
       <div class="url-row">
-        <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/AKfycbzx61Tg_OvouJ5VmoKq9GlyRTdTVTB4MBL6yKoE-rU3LZZMWRL8A5qSIxZ6ZfXqRTaz/exec" />
+        <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/.../exec" />
         <button class="save-btn" onclick="saveUrl()">Save</button>
       </div>
       <div class="url-msg" id="url-msg"></div>
@@ -249,7 +249,7 @@
 
     <div class="settings-card">
       <div class="settings-card-title">Admin PIN <span style="font-size:11px;font-weight:400;color:var(--hint);">(unlocks View all &amp; Settings)</span></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">2236</strong> &mdash; keep this only for yourself.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">0853</strong> &mdash; keep this only for yourself.</div>
       <div class="field" style="margin-bottom:8px;">
         <label for="newAdminPin">New admin PIN (4 digits)</label>
         <input type="password" id="newAdminPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Enter 4-digit PIN" />
@@ -312,7 +312,7 @@
   var staffUnlocked = false;
   var adminUnlocked = false;
   var DEFAULT_STAFF_PIN = '0853';
-  var DEFAULT_ADMIN_PIN = '2236';
+  var DEFAULT_ADMIN_PIN = '0853';
 
   function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
   function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
@@ -470,7 +470,9 @@
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
 
     if (sheetUrl) {
-      fetch(sheetUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) })
+      var formData = new FormData();
+      formData.append('data', JSON.stringify(entry));
+      fetch(sheetUrl, { method: 'POST', body: formData })
         .then(function() { toast('\u2713 Saved and synced to Google Sheets'); })
         .catch(function() { toast('Saved locally \u2014 check sheet URL in Settings'); })
         .finally(function() { resetForm(btn); });
