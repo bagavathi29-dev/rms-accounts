@@ -234,7 +234,7 @@
 
     <div class="settings-card">
       <div class="settings-card-title">Staff PIN <span style="font-size:11px;font-weight:400;color:var(--hint);">(unlocks Log tab)</span></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">1111</strong> &mdash; share with staff so they can view today's log.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">0853</strong> &mdash; share with staff so they can view today's log.</div>
       <div class="field" style="margin-bottom:8px;">
         <label for="newStaffPin">New staff PIN (4 digits)</label>
         <input type="password" id="newStaffPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Enter 4-digit PIN" />
@@ -249,7 +249,7 @@
 
     <div class="settings-card">
       <div class="settings-card-title">Admin PIN <span style="font-size:11px;font-weight:400;color:var(--hint);">(unlocks View all &amp; Settings)</span></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">1234</strong> &mdash; keep this only for yourself.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Default: <strong style="color:var(--text);font-family:'DM Mono',monospace;">2236</strong> &mdash; keep this only for yourself.</div>
       <div class="field" style="margin-bottom:8px;">
         <label for="newAdminPin">New admin PIN (4 digits)</label>
         <input type="password" id="newAdminPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="Enter 4-digit PIN" />
@@ -311,8 +311,8 @@
   var pendingAction = null;
   var staffUnlocked = false;
   var adminUnlocked = false;
-  var DEFAULT_STAFF_PIN = '1111';
-  var DEFAULT_ADMIN_PIN = '1234';
+  var DEFAULT_STAFF_PIN = '0853';
+  var DEFAULT_ADMIN_PIN = '2236';
 
   function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
   function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
