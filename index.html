@@ -564,7 +564,10 @@
           // Timestamp is col 0 e.g. '9/5/2026, 10:54:01 am'
           var ts  = (row[0] || '').trim();
           var rd  = ts.split(',')[0].trim();
-          if (viewAll || rd === today) {
+          // Normalise both dates for comparison
+          var rdN = normaliseDate(rd);
+          var tdN = normaliseDate(today);
+          if (viewAll || rdN === tdN) {
             var amt = parseFloat(row[3]) || 0;
             total += amt; count++;
             if ((row[4] || '').trim() === 'Cash') cash += amt;
@@ -589,6 +592,11 @@
       if (e.method === 'Cash') cash += a;
     });
     updateStats(total, base.length, cash);
+  }
+
+  function normaliseDate(d) {
+    // Strips leading zeros: '09/05/2026' -> '9/5/2026'
+    return d.replace(/(^|\/)(0+)/g, '$1').trim();
   }
 
   function parseCSV(text) {
