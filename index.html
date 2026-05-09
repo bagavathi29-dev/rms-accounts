@@ -310,6 +310,7 @@
 <script>
   var entries = [];
   var sheetUrl = 'https://script.google.com/macros/s/AKfycbwIXzEzYE4Gk0Bk44fM4D0oiftE8xKTGlfALmGdLYHPXpeMYCdIA3fZZ-Y5znbiXMKhJQ/exec';
+  var csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0cpWiCuSgej0ZBy4du2yV73thROB601Yt056lIgFhrgH8542ngfPnLNe0DLWB5yYdngG3Vt8JhvDg/pub?gid=0&single=true&output=csv';
   var viewAll = false;
   var pinBuffer = '';
   var pendingAction = null;
@@ -486,19 +487,10 @@
         toast('\u2713 Saved and synced to Google Sheets');
         resetForm(btn);
       }
-      // Method 1: no-cors fetch (works on most browsers)
+      // no-cors fetch — always resolves, data saves in background
       fetch(saveUrl, { method: 'GET', mode: 'no-cors' })
-        .then(onSuccess)
-        .catch(function() {
-          // Method 2: image ping fallback
-          var img = new Image();
-          img.onload = img.onerror = onSuccess;
-          img.src = saveUrl;
-        });
-      // Method 3: safety timeout — show success after 4s regardless
-      setTimeout(function() {
-        if (!done) onSuccess();
-      }, 4000);
+        .then(function() { onSuccess(); })
+        .catch(function() { onSuccess(); });
     } else {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
@@ -550,33 +542,78 @@
   }
 
   function fetchSheetStats(today) {
+    if (!csvUrl) {
+      // No CSV url — calculate from local entries
+      calcLocalStats(today);
+      return;
+    }
+    // Show spinners
     document.getElementById('stat-total').innerHTML = '<span class="spinner"></span>';
     document.getElementById('stat-count').innerHTML = '<span class="spinner"></span>';
     document.getElementById('stat-cash').innerHTML  = '<span class="spinner"></span>';
 
-    if (!sheetUrl) {
-      document.getElementById('stat-total').textContent = '\u20B9--';
-      document.getElementById('stat-count').textContent = '--';
-      document.getElementById('stat-cash').textContent  = '\u20B9--';
-      return;
-    }
+    // Fetch published CSV — readable cross-origin unlike Apps Script
+    fetch(csvUrl + '&t=' + Date.now())
+      .then(function(r) { return r.text(); })
+      .then(function(csv) {
+        var rows = parseCSV(csv);
+        var total = 0, cash = 0, count = 0;
+        for (var i = 1; i < rows.length; i++) {
+          var row = rows[i];
+          if (!row || row.length < 5) continue;
+          // Timestamp is col 0 e.g. '9/5/2026, 10:54:01 am'
+          var ts  = (row[0] || '').trim();
+          var rd  = ts.split(',')[0].trim();
+          if (viewAll || rd === today) {
+            var amt = parseFloat(row[3]) || 0;
+            total += amt; count++;
+            if ((row[4] || '').trim() === 'Cash') cash += amt;
+          }
+        }
+        updateStats(total, count, cash);
+      })
+      .catch(function() {
+        calcLocalStats(today);
+      });
+  }
 
-    var url = sheetUrl + '?action=stats&date=' + encodeURIComponent(today) + '&viewAll=' + (viewAll ? '1' : '0');
-    var script = document.createElement('script');
-    window._sheetStatsCallback = function(data) {
-      document.getElementById('stat-total').textContent = '\u20B9' + parseFloat(data.total||0).toLocaleString('en-IN', {maximumFractionDigits:0});
-      document.getElementById('stat-count').textContent = data.count || 0;
-      document.getElementById('stat-cash').textContent  = '\u20B9' + parseFloat(data.cash||0).toLocaleString('en-IN', {maximumFractionDigits:0});
-      if (document.body.contains(script)) document.body.removeChild(script);
-    };
-    script.src = url + '&callback=_sheetStatsCallback';
-    script.onerror = function() {
-      document.getElementById('stat-total').textContent = '\u20B9--';
-      document.getElementById('stat-count').textContent = '--';
-      document.getElementById('stat-cash').textContent  = '\u20B9--';
-      if (document.body.contains(script)) document.body.removeChild(script);
-    };
-    document.body.appendChild(script);
+  function calcLocalStats(today) {
+    var base = viewAll ? entries : entries.filter(function(e) {
+      var dk = e.dateKey || (e.timestamp ? e.timestamp.split(',')[0].trim() : '');
+      return dk === today;
+    });
+    var total = 0, cash = 0;
+    base.forEach(function(e) {
+      var a = parseFloat(e.amount) || 0;
+      total += a;
+      if (e.method === 'Cash') cash += a;
+    });
+    updateStats(total, base.length, cash);
+  }
+
+  function parseCSV(text) {
+    var rows = [];
+    var lines = text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var cols = [], cur = '', inQ = false;
+      for (var c = 0; c < line.length; c++) {
+        var ch = line[c];
+        if (ch === '"') { inQ = !inQ; }
+        else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+      }
+      cols.push(cur.trim());
+      rows.push(cols);
+    }
+    return rows;
+  }
+
+  function updateStats(total, count, cash) {
+    document.getElementById('stat-total').textContent = '\u20B9' + parseFloat(total||0).toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('stat-count').textContent = count || 0;
+    document.getElementById('stat-cash').textContent  = '\u20B9' + parseFloat(cash||0).toLocaleString('en-IN', {maximumFractionDigits:0});
   }
 
   /* ---- Settings actions ---- */
