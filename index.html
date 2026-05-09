@@ -509,36 +509,74 @@
   function renderLog() {
     var today      = getTodayKey();
     var todayLabel = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long', year: 'numeric' });
-    var filter     = document.getElementById('filterMethod').value;
-    var base       = viewAll ? entries : entries.filter(function(e) {
-      var dk = e.dateKey || (e.timestamp ? e.timestamp.split(',')[0].trim() : '');
-      return dk === today;
-    });
-    var filtered = filter ? base.filter(function(e) { return e.method === filter; }) : base;
     document.getElementById('log-date-heading').textContent = viewAll ? 'All entries' : 'Today \u2014 ' + todayLabel;
-
-    // Show local entries immediately
-    var list = document.getElementById('log-list');
-    if (!filtered.length) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div>' + (viewAll ? 'No entries found.' : 'No entries for today yet.') + '</div>';
-    } else {
-      list.innerHTML = filtered.map(function(e, idx) {
-        var bc = e.method === 'GPay' ? 'badge-gpay' : 'badge-cash';
-        var realIdx = entries.indexOf(e);
-        var delBtn = adminUnlocked
-          ? '<button class="delete-btn" onclick="deleteEntry(' + realIdx + ')" title="Delete entry">&#10005;</button>'
-          : '';
-        return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">' + e.patient +
-          '</div><div class="entry-amount">' +
-          '\u20B9' + parseFloat(e.amount).toLocaleString('en-IN') +
-          '</div>' + delBtn + '</div><div class="entry-meta"><span class="badge ' + bc + '">' + e.method + '</span>Dr. ' +
-          e.doctor + ' &nbsp;&middot;&nbsp; ' + e.collectedBy +
-          '</div><div class="entry-time">' + e.timestamp + '</div></div>';
-      }).join('');
-    }
-
-    // Fetch live stats from Google Sheet
+    document.getElementById('log-list').innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading...</div>';
     fetchSheetStats(today);
+    fetchSheetEntries(today);
+  }
+
+  function fetchSheetEntries(today) {
+    if (!csvUrl) { renderLocalEntries(today); return; }
+    fetch(csvUrl + '&t=' + Date.now())
+      .then(function(r) { return r.text(); })
+      .then(function(csv) {
+        var rows = parseCSV(csv);
+        var filter = document.getElementById('filterMethod').value;
+        var sheetEntries = [];
+        for (var i = 1; i < rows.length; i++) {
+          var row = rows[i];
+          if (!row || row.length < 6) continue;
+          var ts  = (row[0] || '').trim();
+          var rd  = normaliseDate(ts.split(',')[0].trim());
+          var tdN = normaliseDate(today);
+          if (viewAll || rd === tdN) {
+            sheetEntries.push({
+              timestamp:   ts,
+              patient:     row[1] || '',
+              doctor:      row[2] || '',
+              amount:      row[3] || '0',
+              method:      row[4] || '',
+              collectedBy: row[5] || ''
+            });
+          }
+        }
+        // Sort newest first
+        sheetEntries.sort(function(a, b) {
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+        if (filter) sheetEntries = sheetEntries.filter(function(e) { return e.method === filter; });
+        renderEntryCards(sheetEntries);
+      })
+      .catch(function() { renderLocalEntries(today); });
+  }
+
+  function renderLocalEntries(today) {
+    var filter = document.getElementById('filterMethod').value;
+    var base = viewAll ? entries : entries.filter(function(e) {
+      var dk = e.dateKey || (e.timestamp ? e.timestamp.split(',')[0].trim() : '');
+      return normaliseDate(dk) === normaliseDate(today);
+    });
+    if (filter) base = base.filter(function(e) { return e.method === filter; });
+    renderEntryCards(base);
+  }
+
+  function renderEntryCards(list) {
+    var el = document.getElementById('log-list');
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div>' + (viewAll ? 'No entries found.' : 'No entries for today yet.') + '</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(e, idx) {
+      var bc = e.method === 'GPay' ? 'badge-gpay' : 'badge-cash';
+      var delBtn = adminUnlocked
+        ? '<button class="delete-btn" onclick="deleteSheetEntry(' + idx + ')" title="Delete entry">&#10005;</button>'
+        : '';
+      return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">' + e.patient +
+        '</div><div class="entry-amount">\u20B9' + parseFloat(e.amount).toLocaleString('en-IN') +
+        '</div>' + delBtn + '</div><div class="entry-meta"><span class="badge ' + bc + '">' + e.method + '</span>Dr. ' +
+        e.doctor + ' &nbsp;&middot;&nbsp; ' + e.collectedBy +
+        '</div><div class="entry-time">' + e.timestamp + '</div></div>';
+    }).join('');
   }
 
   function fetchSheetStats(today) {
@@ -671,7 +709,11 @@
     entries.splice(idx, 1);
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
     renderLog();
-    toast('Entry deleted');
+    toast('Entry deleted locally');
+  }
+
+  function deleteSheetEntry(idx) {
+    toast('To delete, please remove the row directly from Google Sheets.');
   }
 
   function clearLog() {
