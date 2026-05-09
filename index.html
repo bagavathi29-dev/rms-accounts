@@ -411,7 +411,8 @@
       if (adminOk) adminUnlocked = true;
       pendingAction = null;
       document.getElementById('pinOverlay').classList.remove('show');
-      doSwitchTab('log');
+      // Always land on New Entry after PIN
+      doSwitchTab('form');
       toast('Access granted');
 
     } else if (action === 'viewall' && adminOk) {
@@ -528,29 +529,21 @@
         var rows = parseCSV(csv);
         var filter = document.getElementById('filterMethod').value;
         var sheetEntries = [];
-        var todayN = normaliseDate(today);
-        // Show debug info in log temporarily
-        var debugEl = document.getElementById('log-list');
-        if (rows.length > 1) {
-          var firstTs = (rows[1][0]||'').trim();
-          var firstDate = normaliseDate(firstTs.split(',')[0].trim());
-          debugEl.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:8px;">Debug: Sheet date = "' + firstDate + '" | Today = "' + todayN + '" | Match = ' + (firstDate===todayN) + '</div>';
-        }
         for (var i = 1; i < rows.length; i++) {
           var row = rows[i];
           if (!row || row.length < 4) continue;
-          var ts  = (row[0] || '').trim();
+          var ts  = (row[0] || '').replace(/"/g,'').trim();
           var rd  = normaliseDate(ts.split(',')[0].trim());
           var tdN = normaliseDate(today);
           var sameDay = rd === tdN;
           if (viewAll || sameDay) {
             sheetEntries.push({
               timestamp:   ts,
-              patient:     row[1] || '',
-              doctor:      row[2] || '',
-              amount:      row[3] || '0',
-              method:      row[4] || '',
-              collectedBy: row[5] || ''
+              patient:     (row[1] || '').replace(/"/g,'').trim(),
+              doctor:      (row[2] || '').replace(/"/g,'').trim(),
+              amount:      (row[3] || '0').replace(/"/g,'').trim(),
+              method:      (row[4] || '').replace(/"/g,'').trim(),
+              collectedBy: (row[5] || '').replace(/"/g,'').trim()
             });
           }
         }
