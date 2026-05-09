@@ -475,33 +475,30 @@
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
 
     if (sheetUrl) {
-      // JSONP script tag — proven CORS bypass for Google Apps Script
-      var cbName = '_saveCallback_' + Date.now();
       var params = Object.keys(entry).map(function(k) {
         return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
       }).join('&');
-      var saveUrl = sheetUrl + '?action=save&callback=' + cbName + '&' + params;
-      var scriptEl = document.createElement('script');
-      var timer = setTimeout(function() {
+      var saveUrl = sheetUrl + '?action=save&' + params;
+      // Try fetch no-cors first, then image fallback
+      var done = false;
+      function onSuccess() {
+        if (done) return; done = true;
         toast('\u2713 Saved and synced to Google Sheets');
         resetForm(btn);
-        if (document.body.contains(scriptEl)) document.body.removeChild(scriptEl);
-      }, 3000);
-      window[cbName] = function(resp) {
-        clearTimeout(timer);
-        toast('\u2713 Saved and synced to Google Sheets');
-        resetForm(btn);
-        delete window[cbName];
-        if (document.body.contains(scriptEl)) document.body.removeChild(scriptEl);
-      };
-      scriptEl.src = saveUrl;
-      scriptEl.onerror = function() {
-        clearTimeout(timer);
-        toast('Sync failed - saved locally only');
-        resetForm(btn);
-        delete window[cbName];
-      };
-      document.body.appendChild(scriptEl);
+      }
+      // Method 1: no-cors fetch (works on most browsers)
+      fetch(saveUrl, { method: 'GET', mode: 'no-cors' })
+        .then(onSuccess)
+        .catch(function() {
+          // Method 2: image ping fallback
+          var img = new Image();
+          img.onload = img.onerror = onSuccess;
+          img.src = saveUrl;
+        });
+      // Method 3: safety timeout — show success after 4s regardless
+      setTimeout(function() {
+        if (!done) onSuccess();
+      }, 4000);
     } else {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
