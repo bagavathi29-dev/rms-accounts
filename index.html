@@ -475,24 +475,25 @@
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
 
     if (sheetUrl) {
-      // Use script tag trick to bypass CORS
+      // Use no-cors fetch — works on mobile and desktop
       var params = Object.keys(entry).map(function(k) {
         return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
       }).join('&');
-      var url = sheetUrl + '?' + params;
-      var script = document.createElement('script');
-      script.src = url;
-      script.onload = function() {
-        toast('\u2713 Saved and synced to Google Sheets');
-        document.body.removeChild(script);
-        resetForm(btn);
-      };
-      script.onerror = function() {
-        toast('\u2713 Saved and synced to Google Sheets');
-        document.body.removeChild(script);
-        resetForm(btn);
-      };
-      document.body.appendChild(script);
+      var saveUrl = sheetUrl + '?' + params;
+      fetch(saveUrl, { method: 'GET', mode: 'no-cors' })
+        .then(function() {
+          toast('\u2713 Saved and synced to Google Sheets');
+          resetForm(btn);
+        })
+        .catch(function(err) {
+          // Fallback to image ping if fetch fails
+          var img = new Image();
+          img.src = saveUrl;
+          img.onload = img.onerror = function() {
+            toast('\u2713 Saved and synced to Google Sheets');
+            resetForm(btn);
+          };
+        });
     } else {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
