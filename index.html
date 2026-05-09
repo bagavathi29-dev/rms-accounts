@@ -230,7 +230,7 @@
         Click <strong>Deploy</strong> &rarr; <strong>New deployment</strong> &rarr; type: <strong>Web App</strong> &rarr; Execute as <strong>Me</strong> &rarr; Who has access: <strong>Anyone</strong> &rarr; Deploy &rarr; copy the URL.
       </div>
       <div class="url-row">
-        <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/AKfycbx6UpTJKDvNsqJPalT-kpJrWgJqxCtAHtD7CVwCbclhDeukG0UNBeAz7Rb-uYbf77nA0w/exec" />
+        <input type="text" id="sheetUrl" placeholder="https://script.google.com/macros/s/.../exec" />
         <button class="save-btn" onclick="saveUrl()">Save</button>
       </div>
       <div class="url-msg" id="url-msg"></div>
@@ -309,22 +309,23 @@
 
 <script>
   var entries = [];
-  var sheetUrl = '';
+  var sheetUrl = 'https://script.google.com/macros/s/AKfycbx6UpTJKDvNsqJPalT-kpJrWgJqxCtAHtD7CVwCbclhDeukG0UNBeAz7Rb-uYbf77nA0w/exec';
   var viewAll = false;
   var pinBuffer = '';
   var pendingAction = null;
   var staffUnlocked = false;
   var adminUnlocked = false;
   var DEFAULT_STAFF_PIN = '0853';
-  var DEFAULT_ADMIN_PIN = '0853';
+  var DEFAULT_ADMIN_PIN = '2236';
 
   function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
   function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
 
   function init() {
     try { entries = JSON.parse(localStorage.getItem('clinic_entries') || '[]'); } catch(e) { entries = []; }
-    try { sheetUrl = localStorage.getItem('clinic_sheet_url') || ''; } catch(e) {}
-    if (sheetUrl) { document.getElementById('sheetUrl').value = sheetUrl; setConnected(true); }
+    try { sheetUrl = localStorage.getItem('clinic_sheet_url') || sheetUrl; } catch(e) {}
+    document.getElementById('sheetUrl').value = sheetUrl;
+    setConnected(true);
     document.getElementById('filterMethod').addEventListener('change', renderLog);
     document.getElementById('view-all-btn').addEventListener('click', toggleViewAll);
     // Require PIN on first load
