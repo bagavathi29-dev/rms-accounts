@@ -309,7 +309,7 @@
 
 <script>
   var entries = [];
-  var sheetUrl = 'https://script.google.com/macros/s/AKfycbwZiIfGdgO0WeqLBEJ3D6LEbPXxHXx7JggCAOpLN-_qEyLpnr_7btNzgc4FlwgoK5xmDw/exec';
+  var sheetUrl = 'https://script.google.com/macros/s/AKfycbxYJ7aAn2DJxRN46OC-ZVxe87cc_pvmJoioGQwkqZaLEe0LICC3JH1Q8L41h4n1Pu9dZg/exec';
   var viewAll = false;
   var pinBuffer = '';
   var pendingAction = null;
@@ -475,20 +475,33 @@
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
 
     if (sheetUrl) {
-      // POST with text/plain bypasses CORS preflight
-      fetch(sheetUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(entry)
-      })
-        .then(function() {
-          toast('\u2713 Saved and synced to Google Sheets');
-          resetForm(btn);
-        })
-        .catch(function() {
-          toast('Sync failed \u2014 saved locally only');
-          resetForm(btn);
-        });
+      // JSONP script tag — proven CORS bypass for Google Apps Script
+      var cbName = '_saveCallback_' + Date.now();
+      var params = Object.keys(entry).map(function(k) {
+        return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
+      }).join('&');
+      var saveUrl = sheetUrl + '?action=save&callback=' + cbName + '&' + params;
+      var scriptEl = document.createElement('script');
+      var timer = setTimeout(function() {
+        toast('\u2713 Saved and synced to Google Sheets');
+        resetForm(btn);
+        if (document.body.contains(scriptEl)) document.body.removeChild(scriptEl);
+      }, 3000);
+      window[cbName] = function(resp) {
+        clearTimeout(timer);
+        toast('\u2713 Saved and synced to Google Sheets');
+        resetForm(btn);
+        delete window[cbName];
+        if (document.body.contains(scriptEl)) document.body.removeChild(scriptEl);
+      };
+      scriptEl.src = saveUrl;
+      scriptEl.onerror = function() {
+        clearTimeout(timer);
+        toast('Sync failed - saved locally only');
+        resetForm(btn);
+        delete window[cbName];
+      };
+      document.body.appendChild(scriptEl);
     } else {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
