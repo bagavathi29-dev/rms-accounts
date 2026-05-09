@@ -504,7 +504,12 @@
   }
 
   /* ---- Log ---- */
-  function getTodayKey() { return new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }); }
+  function getTodayKey() {
+    var d = new Date();
+    // Use same format as Google Sheets timestamp: d/M/yyyy
+    var dd = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+    return normaliseDate(dd);
+  }
 
   function renderLog() {
     var today      = getTodayKey();
@@ -523,13 +528,22 @@
         var rows = parseCSV(csv);
         var filter = document.getElementById('filterMethod').value;
         var sheetEntries = [];
+        var todayN = normaliseDate(today);
+        // Show debug info in log temporarily
+        var debugEl = document.getElementById('log-list');
+        if (rows.length > 1) {
+          var firstTs = (rows[1][0]||'').trim();
+          var firstDate = normaliseDate(firstTs.split(',')[0].trim());
+          debugEl.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:8px;">Debug: Sheet date = "' + firstDate + '" | Today = "' + todayN + '" | Match = ' + (firstDate===todayN) + '</div>';
+        }
         for (var i = 1; i < rows.length; i++) {
           var row = rows[i];
-          if (!row || row.length < 6) continue;
+          if (!row || row.length < 4) continue;
           var ts  = (row[0] || '').trim();
           var rd  = normaliseDate(ts.split(',')[0].trim());
           var tdN = normaliseDate(today);
-          if (viewAll || rd === tdN) {
+          var sameDay = rd === tdN;
+          if (viewAll || sameDay) {
             sheetEntries.push({
               timestamp:   ts,
               patient:     row[1] || '',
