@@ -324,7 +324,7 @@
 
   function init() {
     try { entries = JSON.parse(localStorage.getItem('clinic_entries') || '[]'); } catch(e) { entries = []; }
-    try { sheetUrl = localStorage.getItem('clinic_sheet_url') || sheetUrl; } catch(e) {}
+    // sheetUrl is hardcoded — localStorage override removed
     document.getElementById('sheetUrl').value = sheetUrl;
     setConnected(true);
     document.getElementById('filterMethod').addEventListener('change', renderLog);
