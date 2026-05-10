@@ -103,6 +103,19 @@
   .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .stat-loading { font-size:12px; color:var(--hint); }
+
+  .past-date-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--warn-light); border: 1px solid #f0c080;
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    margin-bottom: 12px; cursor: pointer;
+  }
+  .past-date-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  .past-date-row label { font-size: 13px; color: var(--warn); font-weight: 500; cursor: pointer; }
+  .past-date-field { display: none; margin-bottom: 12px; }
+  .past-date-field.show { display: block; }
+  .past-date-field input[type=date] { width: 100%; padding: 11px 14px; font-family: "DM Sans", sans-serif; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; }
+  .past-date-field input[type=date]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,95,63,0.08); }
 </style>
 </head>
 <body>
@@ -162,6 +175,14 @@
         <option value="Uma"></option>
         <option value="Srinidhi"></option>
       </datalist>
+    </div>
+    <div class="past-date-row" onclick="togglePastDate()">
+      <input type="checkbox" id="pastDateCheck" onclick="event.stopPropagation(); togglePastDate()" />
+      <label for="pastDateCheck">&#128197; Adding a past dated record</label>
+    </div>
+    <div class="past-date-field" id="pastDateField">
+      <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500;">Select date</label>
+      <input type="date" id="pastDate" max="" />
     </div>
     <div class="error-msg" id="form-error"></div>
     <button class="submit-btn" id="submitBtn" onclick="submitEntry()">Save &amp; Sync to Google Sheets</button>
@@ -331,6 +352,17 @@
     document.getElementById('view-all-btn').addEventListener('click', toggleViewAll);
     // Require PIN on first load
     if (!staffUnlocked) { pendingAction = 'form'; showPinModal('staff'); }
+    // Set max date for past date picker to today
+    var todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('pastDate').max = todayStr;
+  }
+
+  function togglePastDate() {
+    var cb = document.getElementById('pastDateCheck');
+    var field = document.getElementById('pastDateField');
+    cb.checked = !cb.checked;
+    field.classList.toggle('show', cb.checked);
+    if (!cb.checked) document.getElementById('pastDate').value = '';
   }
 
   /* ---- Tab switching ---- */
@@ -462,10 +494,21 @@
     }
     errEl.style.display = 'none';
 
-    var now = new Date();
+    var isPast = document.getElementById('pastDateCheck').checked;
+    var pastVal = document.getElementById('pastDate').value;
+    if (isPast && !pastVal) {
+      errEl.textContent = 'Please select a past date.';
+      errEl.style.display = 'block'; return;
+    }
+    var now = isPast ? new Date(pastVal + 'T12:00:00') : new Date();
+    var tsOptions = { timeZone: 'Asia/Kolkata' };
+    var timestamp = isPast
+      ? now.toLocaleDateString('en-IN', tsOptions) + ', 12:00:00 (past entry)'
+      : now.toLocaleString('en-IN', tsOptions);
+    var dateKey = now.toLocaleDateString('en-IN', tsOptions);
     var entry = {
-      timestamp:   now.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-      dateKey:     now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp:   timestamp,
+      dateKey:     dateKey,
       patient: patient, doctor: doctor,
       amount:  parseFloat(amount).toFixed(2),
       method:  method, collectedBy: collectedBy
@@ -502,6 +545,9 @@
     btn.disabled = false; btn.textContent = 'Save & Sync to Google Sheets';
     ['patientName','doctorName','amountPaid','collectedBy'].forEach(function(id) { document.getElementById(id).value = ''; });
     document.getElementById('paymentMethod').value = '';
+    document.getElementById('pastDateCheck').checked = false;
+    document.getElementById('pastDate').value = '';
+    document.getElementById('pastDateField').classList.remove('show');
   }
 
   /* ---- Log ---- */
