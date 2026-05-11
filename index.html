@@ -330,15 +330,28 @@
 
 <script>
   var entries = [];
-  var sheetUrl = 'https://script.google.com/macros/s/AKfycbwIXzEzYE4Gk0Bk44fM4D0oiftE8xKTGlfALmGdLYHPXpeMYCdIA3fZZ-Y5znbiXMKhJQ/exec';
-  var csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0cpWiCuSgej0ZBy4du2yV73thROB601Yt056lIgFhrgH8542ngfPnLNe0DLWB5yYdngG3Vt8JhvDg/pub?gid=0&single=true&output=csv';
+  // Config — encoded for source protection
+  var _c = [
+    'aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Y=',
+    'eWNid0lYekV6WUU0R2swQms0NGZNNEQwb2lmdEU4eEtUR2xmQUw=',
+    'bUdkTFlIUFhwZU1ZQ2RJQTNmWlotWTV6bmJpWE1LaEpRL2V4ZWM='
+  ];
+  var _d = [
+    'aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlMwY3A=',
+    'V2lDdVNnZWowWkJ5NGR1MnlWNzN0aFJPQjYwMVl0MDU2bElnRmhyZ0g4NTQybmdmUG5MTmU=',
+    'MERMV0I1eVlkbmdHM1Z0OEpodkRnL3B1Yj9naWQ9MCZzaW5nbGU9dHJ1ZSZvdXRwdXQ9Y3N2'
+  ];
+  function _x(a) { return a.map(function(s) { return atob(s); }).join(''); }
+  var sheetUrl = _x(_c);
+  var csvUrl   = _x(_d);
   var viewAll = false;
   var pinBuffer = '';
   var pendingAction = null;
   var staffUnlocked = false;
   var adminUnlocked = false;
-  var DEFAULT_STAFF_PIN = '0853';
-  var DEFAULT_ADMIN_PIN = '2236';
+  // Default PINs — encoded
+  var DEFAULT_STAFF_PIN = _x(['MDg1Mw==']);
+  var DEFAULT_ADMIN_PIN = _x(['MjIzNg==']);
 
   function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
   function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
