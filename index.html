@@ -575,16 +575,20 @@
         var rows = parseCSV(csv);
         var filter = document.getElementById('filterMethod').value;
         var sheetEntries = [];
+        var tdN = normaliseDate(today);
         for (var i = 1; i < rows.length; i++) {
           var row = rows[i];
           if (!row || row.length < 4) continue;
-          var ts  = (row[0] || '').replace(/"/g,'').trim();
-          var rd  = normaliseDate(ts.split(',')[0].trim());
-          var tdN = normaliseDate(today);
+          var ts    = (row[0] || '').replace(/"/g,'').trim();
+          var rd    = normaliseDate(ts.split(',')[0].trim());
+          var isPastEntry = ts.indexOf('past entry') !== -1;
           var sameDay = rd === tdN;
+          // Include if: viewAll (all rows) OR same day (today's rows)
           if (viewAll || sameDay) {
             sheetEntries.push({
               timestamp:   ts,
+              dateKey:     rd,
+              isPast:      isPastEntry,
               patient:     (row[1] || '').replace(/"/g,'').trim(),
               doctor:      (row[2] || '').replace(/"/g,'').trim(),
               amount:      (row[3] || '0').replace(/"/g,'').trim(),
@@ -593,9 +597,13 @@
             });
           }
         }
-        // Sort newest first
+        // Sort by dateKey safely — no Date() parsing of custom strings
         sheetEntries.sort(function(a, b) {
-          return new Date(b.timestamp) - new Date(a.timestamp);
+          var ap = a.dateKey.split('/'); // d/m/yyyy
+          var bp = b.dateKey.split('/');
+          var ad = new Date(ap[2], ap[1]-1, ap[0]);
+          var bd = new Date(bp[2], bp[1]-1, bp[0]);
+          return bd - ad; // newest first
         });
         if (filter) sheetEntries = sheetEntries.filter(function(e) { return e.method === filter; });
         renderEntryCards(sheetEntries);
@@ -624,11 +632,15 @@
       var delBtn = adminUnlocked
         ? '<button class="delete-btn" onclick="deleteSheetEntry(' + idx + ')" title="Delete entry">&#10005;</button>'
         : '';
+      var pastBadge = e.isPast
+        ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--warn-light);color:var(--warn);margin-left:4px;">Past entry</span>'
+        : '';
+      var displayTs = e.timestamp.replace(', 12:00:00 (past entry)','').replace('(past entry)','').trim();
       return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">' + e.patient +
         '</div><div class="entry-amount">\u20B9' + parseFloat(e.amount).toLocaleString('en-IN') +
         '</div>' + delBtn + '</div><div class="entry-meta"><span class="badge ' + bc + '">' + e.method + '</span>Dr. ' +
-        e.doctor + ' &nbsp;&middot;&nbsp; ' + e.collectedBy +
-        '</div><div class="entry-time">' + e.timestamp + '</div></div>';
+        e.doctor + ' &nbsp;&middot;&nbsp; ' + e.collectedBy + pastBadge +
+        '</div><div class="entry-time">' + displayTs + '</div></div>';
     }).join('');
   }
 
