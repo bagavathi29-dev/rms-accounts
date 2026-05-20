@@ -515,54 +515,68 @@
 
   /* ---- Form ---- */
   function submitEntry() {
+    var errEl = document.getElementById('form-error');
+    errEl.style.display = 'none';
+
     var patient     = document.getElementById('patientName').value.trim();
     var doctor      = document.getElementById('doctorName').value.trim();
     var method      = document.getElementById('paymentMethod').value;
     var collectedBy = document.getElementById('collectedBy').value.trim();
-    var errEl       = document.getElementById('form-error');
-    var isSplit     = method === 'Split';
-    var cashAmt     = parseFloat(document.getElementById('cashAmount').value) || 0;
-    var gpayAmt     = parseFloat(document.getElementById('gpayAmount').value) || 0;
-    var rawAmount   = parseFloat(document.getElementById('amountPaid').value) || 0;
+    var isSplit     = (method === 'Split');
+    var cashAmt     = parseFloat(document.getElementById('cashAmount').value)  || 0;
+    var gpayAmt     = parseFloat(document.getElementById('gpayAmount').value)  || 0;
+    var rawAmount   = parseFloat(document.getElementById('amountPaid').value)  || 0;
     var totalAmount = isSplit ? (cashAmt + gpayAmt) : rawAmount;
 
-    if (!patient || !doctor || !method || !collectedBy) {
-      errEl.textContent = 'Please fill in all fields before saving.'; errEl.style.display = 'block'; return;
-    }
-    if (isSplit && (cashAmt <= 0 && gpayAmt <= 0)) {
-      errEl.textContent = 'Please enter Cash and/or GPay amounts for split payment.'; errEl.style.display = 'block'; return;
+    // Validation
+    if (!patient)     { errEl.textContent = 'Please enter patient name.';    errEl.style.display = 'block'; return; }
+    if (!doctor)      { errEl.textContent = 'Please enter doctor name.';     errEl.style.display = 'block'; return; }
+    if (!method)      { errEl.textContent = 'Please select payment method.'; errEl.style.display = 'block'; return; }
+    if (!collectedBy) { errEl.textContent = 'Please select collected by.';   errEl.style.display = 'block'; return; }
+    if (isSplit && cashAmt <= 0 && gpayAmt <= 0) {
+      errEl.textContent = 'Please enter Cash and/or GPay amounts.';
+      errEl.style.display = 'block'; return;
     }
     if (!isSplit && rawAmount <= 0) {
-      errEl.textContent = 'Please enter the amount paid.'; errEl.style.display = 'block'; return;
+      errEl.textContent = 'Please enter the amount paid.';
+      errEl.style.display = 'block'; return;
     }
-    errEl.style.display = 'none';
 
-    var isPast = document.getElementById('pastDateCheck').checked;
+    // Date
+    var isPast  = document.getElementById('pastDateCheck').checked;
     var pastVal = document.getElementById('pastDate').value;
     if (isPast && !pastVal) {
       errEl.textContent = 'Please select a past date.';
       errEl.style.display = 'block'; return;
     }
-    var now = isPast ? new Date(pastVal + 'T12:00:00') : new Date();
-    var tsOptions = { timeZone: 'Asia/Kolkata' };
+    var now       = isPast ? new Date(pastVal + 'T12:00:00') : new Date();
+    var opts      = { timeZone: 'Asia/Kolkata' };
     var timestamp = isPast
-      ? now.toLocaleDateString('en-IN', tsOptions) + ', 12:00:00 (past entry)'
-      : now.toLocaleString('en-IN', tsOptions);
-    var dateKey = now.toLocaleDateString('en-IN', tsOptions);
+      ? now.toLocaleDateString('en-IN', opts) + ', 12:00:00 (past entry)'
+      : now.toLocaleString('en-IN', opts);
+    var dateKey   = now.toLocaleDateString('en-IN', opts);
+
+    // Build entry
     var entry = {
       timestamp:   timestamp,
       dateKey:     dateKey,
-      patient: patient, doctor: doctor,
+      patient:     patient,
+      doctor:      doctor,
       amount:      totalAmount.toFixed(2),
-      cashAmount:  isSplit ? cashAmt.toFixed(2) : (method === 'Cash' ? rawAmount.toFixed(2) : '0'),
-      gpayAmount:  isSplit ? gpayAmt.toFixed(2) : (method === 'GPay' ? rawAmount.toFixed(2) : '0'),
-      method:      method, collectedBy: collectedBy
+      method:      method,
+      cashAmount:  isSplit ? cashAmt.toFixed(2)   : (method === 'Cash' ? rawAmount.toFixed(2) : '0'),
+      gpayAmount:  isSplit ? gpayAmt.toFixed(2)   : (method === 'GPay' ? rawAmount.toFixed(2) : '0'),
+      collectedBy: collectedBy
     };
 
+    // Save locally
     var btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'Saving...';
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
     entries.unshift(entry);
-    try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
+    try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(ex) {}
+
+    // Sync to sheet
     syncToSheet(entry, btn);
   }
 
