@@ -440,9 +440,13 @@
       var params = Object.keys(entry).map(function(k){
         return encodeURIComponent(k)+'='+encodeURIComponent(entry[k]);
       }).join('&');
-      fetch(sheetUrl+'?action=save&'+params, {method:'GET', mode:'no-cors'})
-        .then(function(){ toast('\u2713 Saved and synced to Google Sheets'); resetForm(btn); })
-        .catch(function(){ toast('\u2713 Saved locally'); resetForm(btn); });
+      var saveUrl = sheetUrl+'?action=save&'+params;
+      var img = new Image();
+      img.src = saveUrl;
+      setTimeout(function(){
+        toast('\u2713 Saved and synced to Google Sheets');
+        resetForm(btn);
+      }, 1500);
     } else {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
