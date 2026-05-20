@@ -563,27 +563,28 @@
     btn.disabled = true; btn.textContent = 'Saving...';
     entries.unshift(entry);
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(e) {}
+    syncToSheet(entry, btn);
+  }
 
-    if (sheetUrl) {
-      var params = Object.keys(entry).map(function(k) {
-        return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
-      }).join('&');
-      var saveUrl = sheetUrl + '?action=save&' + params;
-      // Try fetch no-cors first, then image fallback
-      var done = false;
-      function onSuccess() {
-        if (done) return; done = true;
-        toast('\u2713 Saved and synced to Google Sheets');
-        resetForm(btn);
-      }
-      // no-cors fetch — always resolves, data saves in background
-      fetch(saveUrl, { method: 'GET', mode: 'no-cors' })
-        .then(function() { onSuccess(); })
-        .catch(function() { onSuccess(); });
-    } else {
+  function syncToSheet(entry, btn) {
+    if (!sheetUrl) {
       toast('Saved locally \u2014 connect Google Sheets in Settings');
       resetForm(btn);
+      return;
     }
+    var params = Object.keys(entry).map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
+    }).join('&');
+    var saveUrl = sheetUrl + '?action=save&' + params;
+    fetch(saveUrl, { method: 'GET', mode: 'no-cors' })
+      .then(function() {
+        toast('\u2713 Saved and synced to Google Sheets');
+        resetForm(btn);
+      })
+      .catch(function() {
+        toast('\u2713 Saved locally');
+        resetForm(btn);
+      });
   }
 
   function resetForm(btn) {
