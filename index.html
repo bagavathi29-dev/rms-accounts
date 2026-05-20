@@ -104,6 +104,57 @@
   .past-date-field input[type=date] { width: 100%; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; }
   .split-row { display: none; gap: 10px; margin-bottom: 12px; }
   .split-row.show { display: flex; }
+
+  /* ── Doctor Autocomplete ── */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-wrap input { width: 100%; }
+  .ac-ghost {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--hint);
+    pointer-events: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .ac-ghost span.typed { color: transparent; }
+  .ac-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(26,25,22,0.10);
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .ac-dropdown.open { display: block; }
+  .ac-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+  }
+  .ac-item:hover, .ac-item.active { background: var(--accent-light); }
+  .ac-item .ac-icon { font-size: 11px; color: var(--hint); flex-shrink: 0; }
+  .ac-item .ac-match { font-weight: 600; color: var(--accent-text); }
+  .ac-hint {
+    font-size: 10px;
+    color: var(--hint);
+    padding: 4px 14px 8px;
+    font-style: italic;
+  }
 </style>
 </head>
 <body>
@@ -133,10 +184,17 @@
       <label for="patientName">Patient name</label>
       <input type="text" id="patientName" placeholder="Full name" autocomplete="off" />
     </div>
+
+    <!-- ── Doctor Name with Autocomplete ── -->
     <div class="field">
       <label for="doctorName">Referred doctor</label>
-      <input type="text" id="doctorName" placeholder="Dr. name" autocomplete="off" />
+      <div class="autocomplete-wrap" id="doctorWrap">
+        <div class="ac-ghost" id="doctorGhost" aria-hidden="true"></div>
+        <input type="text" id="doctorName" placeholder="Dr. name" autocomplete="off" />
+        <div class="ac-dropdown" id="doctorDropdown"></div>
+      </div>
     </div>
+
     <div class="section-label">Payment details</div>
     <div class="grid2">
       <div class="field" id="singleAmountWrap">
@@ -303,6 +361,160 @@
   function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
   function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
 
+  /* ════════════════════════════════════════════
+     DOCTOR AUTOCOMPLETE
+     Pulls unique doctor names from the Google
+     Sheet CSV (same source as the log).
+     Falls back to local entries if CSV fails.
+  ════════════════════════════════════════════ */
+  var doctorNames = [];   // cached unique list
+  var acActiveIdx = -1;   // keyboard nav index
+  var acSuggestions = []; // current filtered list
+
+  function loadDoctorNames() {
+    // Build from local entries immediately
+    var localNames = [];
+    entries.forEach(function(e){ if(e.doctor && localNames.indexOf(e.doctor)===-1) localNames.push(e.doctor); });
+    doctorNames = localNames;
+
+    // Then enrich from the Google Sheet CSV
+    if (!csvUrl) return;
+    fetch(csvUrl + '&t=' + Date.now())
+      .then(function(r){ return r.text(); })
+      .then(function(csv){
+        var rows = parseCSV(csv);
+        var names = [];
+        for (var i = 1; i < rows.length; i++) {
+          var row = rows[i];
+          if (!row || row.length < 3) continue;
+          var name = (row[2] || '').replace(/"/g,'').trim();
+          if (name && names.indexOf(name) === -1) names.push(name);
+        }
+        // Merge local + sheet names, deduplicated
+        names.forEach(function(n){ if(doctorNames.indexOf(n)===-1) doctorNames.push(n); });
+        doctorNames.sort();
+      })
+      .catch(function(){});  // silently fall back to local
+  }
+
+  function initDoctorAC() {
+    var inp  = document.getElementById('doctorName');
+    var drop = document.getElementById('doctorDropdown');
+    var ghost = document.getElementById('doctorGhost');
+
+    inp.addEventListener('input', function(){
+      acActiveIdx = -1;
+      renderDropdown(this.value);
+      renderGhost(this.value);
+    });
+
+    inp.addEventListener('keydown', function(e){
+      var items = drop.querySelectorAll('.ac-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        acActiveIdx = Math.min(acActiveIdx + 1, items.length - 1);
+        updateACActive(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        acActiveIdx = Math.max(acActiveIdx - 1, 0);
+        updateACActive(items);
+      } else if (e.key === 'Tab' && acSuggestions.length > 0) {
+        // Tab fills the top suggestion (like Word)
+        e.preventDefault();
+        var pick = acActiveIdx >= 0 ? acSuggestions[acActiveIdx] : acSuggestions[0];
+        selectDoctor(pick);
+      } else if (e.key === 'Enter' && acActiveIdx >= 0) {
+        e.preventDefault();
+        selectDoctor(acSuggestions[acActiveIdx]);
+      } else if (e.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function(e){
+      if (!document.getElementById('doctorWrap').contains(e.target)) closeDropdown();
+    });
+  }
+
+  function renderDropdown(val) {
+    var drop = document.getElementById('doctorDropdown');
+    var q = val.trim().toLowerCase();
+    drop.innerHTML = '';
+    acSuggestions = [];
+
+    if (!q) { drop.classList.remove('open'); return; }
+
+    acSuggestions = doctorNames.filter(function(n){
+      return n.toLowerCase().indexOf(q) === 0 && n.toLowerCase() !== q;
+    });
+
+    // Also include contains-matches (secondary), but starts-with first
+    var contains = doctorNames.filter(function(n){
+      return n.toLowerCase().indexOf(q) > 0;
+    });
+    contains.forEach(function(n){ if(acSuggestions.indexOf(n)===-1) acSuggestions.push(n); });
+
+    if (!acSuggestions.length) { drop.classList.remove('open'); return; }
+
+    acSuggestions.slice(0, 8).forEach(function(name, idx){
+      var li = document.createElement('div');
+      li.className = 'ac-item';
+      // Highlight matched portion
+      var lo = name.toLowerCase(), qi = lo.indexOf(q);
+      var before = name.slice(0, qi);
+      var matched = name.slice(qi, qi + q.length);
+      var after   = name.slice(qi + q.length);
+      li.innerHTML = '<span class="ac-icon">&#9758;</span>' +
+        (before ? before : '') +
+        '<span class="ac-match">' + matched + '</span>' + after;
+      li.addEventListener('mousedown', function(e){
+        e.preventDefault(); // prevent blur
+        selectDoctor(name);
+      });
+      drop.appendChild(li);
+    });
+
+    // Tab hint
+    var hint = document.createElement('div');
+    hint.className = 'ac-hint';
+    hint.textContent = 'Tab to fill \u2022 \u2191\u2193 to navigate \u2022 Enter to select';
+    drop.appendChild(hint);
+
+    drop.classList.add('open');
+  }
+
+  function renderGhost(val) {
+    var ghost = document.getElementById('doctorGhost');
+    var q = val.trim().toLowerCase();
+    if (!q) { ghost.innerHTML = ''; return; }
+
+    // Find first name that starts with typed text
+    var match = doctorNames.find(function(n){ return n.toLowerCase().indexOf(q) === 0 && n.toLowerCase() !== q; });
+    if (!match) { ghost.innerHTML = ''; return; }
+
+    // Show typed part as invisible + rest as grey hint
+    ghost.innerHTML = '<span class="typed">' + val + '</span>' + match.slice(val.length);
+  }
+
+  function updateACActive(items) {
+    items.forEach(function(el, i){ el.classList.toggle('active', i === acActiveIdx); });
+  }
+
+  function selectDoctor(name) {
+    document.getElementById('doctorName').value = name;
+    document.getElementById('doctorGhost').innerHTML = '';
+    closeDropdown();
+  }
+
+  function closeDropdown() {
+    document.getElementById('doctorDropdown').classList.remove('open');
+    document.getElementById('doctorGhost').innerHTML = '';
+    acSuggestions = [];
+    acActiveIdx = -1;
+  }
+  /* ════════════════════════════════════════════ */
+
   function init() {
     try { entries = JSON.parse(localStorage.getItem('clinic_entries') || '[]'); } catch(e) { entries = []; }
     document.getElementById('sheetUrl').value = sheetUrl;
@@ -317,6 +529,10 @@
     if (!staffUnlocked) { pendingAction = 'form'; showPinModal('staff'); }
     var y = new Date(); y.setDate(y.getDate()-1);
     document.getElementById('pastDate').max = y.toISOString().split('T')[0];
+
+    // Init doctor autocomplete
+    initDoctorAC();
+    loadDoctorNames();
   }
 
   function togglePastDate() {
@@ -337,6 +553,8 @@
     document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
     document.getElementById('panel-'+name).classList.add('active');
     if (name==='log') renderLog();
+    // Refresh doctor names when returning to form
+    if (name==='form') loadDoctorNames();
   }
 
   function toggleViewAll() {
@@ -387,7 +605,6 @@
     setTimeout(function(){el.classList.remove('show');},2500);
   }
 
-  /* ---- SUBMIT — same working logic as before, plus split support ---- */
   function submitEntry() {
     var patient     = document.getElementById('patientName').value.trim();
     var doctor      = document.getElementById('doctorName').value.trim();
@@ -436,6 +653,9 @@
     entries.unshift(entry);
     try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(ex) {}
 
+    // Add new doctor to local cache immediately
+    if (doctorNames.indexOf(doctor) === -1) doctorNames.push(doctor);
+
     if (sheetUrl) {
       var params = Object.keys(entry).map(function(k){
         return encodeURIComponent(k)+'='+encodeURIComponent(entry[k]);
@@ -458,6 +678,7 @@
     ['patientName','doctorName','amountPaid','cashAmount','gpayAmount','collectedBy'].forEach(function(id){
       document.getElementById(id).value='';
     });
+    document.getElementById('doctorGhost').innerHTML = '';
     document.getElementById('paymentMethod').value='';
     document.getElementById('splitRow').classList.remove('show');
     document.getElementById('singleAmountWrap').style.display='block';
@@ -466,7 +687,6 @@
     document.getElementById('pastDateField').classList.remove('show');
   }
 
-  /* ---- LOG ---- */
   function getTodayKey() {
     return normaliseDate(new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}));
   }
