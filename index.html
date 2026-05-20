@@ -581,24 +581,14 @@
   }
 
   function syncToSheet(entry, btn) {
-    if (!sheetUrl) {
-      toast('Saved locally \u2014 connect Google Sheets in Settings');
-      resetForm(btn);
-      return;
-    }
+    toast('✓ Saved successfully');
+    resetForm(btn);
+    if (!sheetUrl) return;
     var params = Object.keys(entry).map(function(k) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
     }).join('&');
-    var saveUrl = sheetUrl + '?action=save&' + params;
-    fetch(saveUrl, { method: 'GET', mode: 'no-cors' })
-      .then(function() {
-        toast('\u2713 Saved and synced to Google Sheets');
-        resetForm(btn);
-      })
-      .catch(function() {
-        toast('\u2713 Saved locally');
-        resetForm(btn);
-      });
+    var img = new Image();
+    img.src = sheetUrl + '?action=save&' + params;
   }
 
   function resetForm(btn) {
