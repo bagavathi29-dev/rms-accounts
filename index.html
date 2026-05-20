@@ -587,8 +587,8 @@
     var params = Object.keys(entry).map(function(k) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(entry[k]);
     }).join('&');
-    var img = new Image();
-    img.src = sheetUrl + '?action=save&' + params;
+    var saveUrl = sheetUrl + '?action=save&' + params;
+    fetch(saveUrl, { mode: 'no-cors' }).catch(function() {});
   }
 
   function resetForm(btn) {
