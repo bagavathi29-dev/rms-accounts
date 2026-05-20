@@ -116,6 +116,9 @@
   .past-date-field.show { display: block; }
   .past-date-field input[type=date] { width: 100%; padding: 11px 14px; font-family: "DM Sans", sans-serif; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; }
   .past-date-field input[type=date]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,95,63,0.08); }
+
+  .split-fields { display: none; gap: 10px; margin-top: 10px; }
+  .split-fields.show { display: flex; }
 </style>
 </head>
 <body>
@@ -151,7 +154,7 @@
     </div>
     <div class="section-label">Payment details</div>
     <div class="grid2">
-      <div class="field">
+      <div class="field" id="amountSingleWrap">
         <label for="amountPaid">Amount paid (&#8377;)</label>
         <input type="number" id="amountPaid" placeholder="0" min="0" step="1" />
       </div>
@@ -161,7 +164,18 @@
           <option value="">Select...</option>
           <option value="Cash">Cash</option>
           <option value="GPay">GPay</option>
+          <option value="Split">Split (Cash + GPay)</option>
         </select>
+      </div>
+    </div>
+    <div class="split-fields" id="splitFields">
+      <div class="field" style="flex:1;">
+        <label for="cashAmount">Cash amount (&#8377;)</label>
+        <input type="number" id="cashAmount" placeholder="0" min="0" step="1" />
+      </div>
+      <div class="field" style="flex:1;">
+        <label for="gpayAmount">GPay amount (&#8377;)</label>
+        <input type="number" id="gpayAmount" placeholder="0" min="0" step="1" />
       </div>
     </div>
     <div class="field">
@@ -363,6 +377,11 @@
     setConnected(true);
     document.getElementById('filterMethod').addEventListener('change', renderLog);
     document.getElementById('view-all-btn').addEventListener('click', toggleViewAll);
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+      var isSplit = this.value === 'Split';
+      document.getElementById('splitFields').classList.toggle('show', isSplit);
+      document.getElementById('amountSingleWrap').style.display = isSplit ? 'none' : 'block';
+    });
     // Require PIN on first load
     if (!staffUnlocked) { pendingAction = 'form'; showPinModal('staff'); }
     // Set max date to yesterday — blocks today and future
@@ -498,13 +517,22 @@
   function submitEntry() {
     var patient     = document.getElementById('patientName').value.trim();
     var doctor      = document.getElementById('doctorName').value.trim();
-    var amount      = document.getElementById('amountPaid').value.trim();
     var method      = document.getElementById('paymentMethod').value;
     var collectedBy = document.getElementById('collectedBy').value.trim();
     var errEl       = document.getElementById('form-error');
+    var isSplit     = method === 'Split';
+    var cashAmt     = parseFloat(document.getElementById('cashAmount').value) || 0;
+    var gpayAmt     = parseFloat(document.getElementById('gpayAmount').value) || 0;
+    var amount      = isSplit ? (cashAmt + gpayAmt).toFixed(2) : document.getElementById('amountPaid').value.trim();
 
-    if (!patient || !doctor || !amount || !method || !collectedBy) {
+    if (!patient || !doctor || !method || !collectedBy) {
       errEl.textContent = 'Please fill in all fields before saving.'; errEl.style.display = 'block'; return;
+    }
+    if (isSplit && (cashAmt <= 0 && gpayAmt <= 0)) {
+      errEl.textContent = 'Please enter Cash and/or GPay amounts for split payment.'; errEl.style.display = 'block'; return;
+    }
+    if (!isSplit && !amount) {
+      errEl.textContent = 'Please enter the amount paid.'; errEl.style.display = 'block'; return;
     }
     errEl.style.display = 'none';
 
@@ -524,8 +552,10 @@
       timestamp:   timestamp,
       dateKey:     dateKey,
       patient: patient, doctor: doctor,
-      amount:  parseFloat(amount).toFixed(2),
-      method:  method, collectedBy: collectedBy
+      amount:      parseFloat(amount).toFixed(2),
+      cashAmount:  isSplit ? cashAmt.toFixed(2) : (method === 'Cash' ? parseFloat(amount).toFixed(2) : '0'),
+      gpayAmount:  isSplit ? gpayAmt.toFixed(2) : (method === 'GPay' ? parseFloat(amount).toFixed(2) : '0'),
+      method:      method, collectedBy: collectedBy
     };
 
     var btn = document.getElementById('submitBtn');
@@ -557,8 +587,10 @@
 
   function resetForm(btn) {
     btn.disabled = false; btn.textContent = 'Save & Sync to Google Sheets';
-    ['patientName','doctorName','amountPaid','collectedBy'].forEach(function(id) { document.getElementById(id).value = ''; });
+    ['patientName','doctorName','amountPaid','cashAmount','gpayAmount','collectedBy'].forEach(function(id) { document.getElementById(id).value = ''; });
     document.getElementById('paymentMethod').value = '';
+    document.getElementById('splitFields').classList.remove('show');
+    document.getElementById('amountSingleWrap').style.display = 'block';
     document.getElementById('pastDateCheck').checked = false;
     document.getElementById('pastDate').value = '';
     document.getElementById('pastDateField').classList.remove('show');
@@ -607,7 +639,9 @@
               doctor:      (row[2] || '').replace(/"/g,'').trim(),
               amount:      (row[3] || '0').replace(/"/g,'').trim(),
               method:      (row[4] || '').replace(/"/g,'').trim(),
-              collectedBy: (row[5] || '').replace(/"/g,'').trim()
+              cashAmount:  (row[5] || '0').replace(/"/g,'').trim(),
+              gpayAmount:  (row[6] || '0').replace(/"/g,'').trim(),
+              collectedBy: (row[7] || row[5] || '').replace(/"/g,'').trim()
             });
           }
         }
@@ -651,7 +685,7 @@
         : '';
       var displayTs = e.timestamp.replace(', 12:00:00 (past entry)','').replace('(past entry)','').trim();
       return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">' + e.patient +
-        '</div><div class="entry-amount">\u20B9' + parseFloat(e.amount).toLocaleString('en-IN') +
+        '</div><div class="entry-amount">\u20B9' + parseFloat(e.amount || 0).toLocaleString('en-IN') +
         '</div>' + delBtn + '</div><div class="entry-meta"><span class="badge ' + bc + '">' + e.method + '</span>Dr. ' +
         e.doctor + ' &nbsp;&middot;&nbsp; ' + e.collectedBy + pastBadge +
         '</div><div class="entry-time">' + displayTs + '</div></div>';
@@ -687,7 +721,11 @@
           if (viewAll || rdN === tdN) {
             var amt = parseFloat(row[3]) || 0;
             total += amt; count++;
-            if ((row[4] || '').trim() === 'Cash') cash += amt;
+            var method = (row[4] || '').trim();
+            var cashCol = parseFloat((row[5] || '0').replace(/"/g,'')) || 0;
+            if (method === 'Cash') cash += amt;
+            else if (method === 'Split') cash += cashCol;
+            // GPay only adds to total, not cash
           }
         }
         updateStats(total, count, cash);
