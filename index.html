@@ -523,7 +523,8 @@
     var isSplit     = method === 'Split';
     var cashAmt     = parseFloat(document.getElementById('cashAmount').value) || 0;
     var gpayAmt     = parseFloat(document.getElementById('gpayAmount').value) || 0;
-    var amount      = isSplit ? (cashAmt + gpayAmt).toFixed(2) : document.getElementById('amountPaid').value.trim();
+    var rawAmount   = parseFloat(document.getElementById('amountPaid').value) || 0;
+    var totalAmount = isSplit ? (cashAmt + gpayAmt) : rawAmount;
 
     if (!patient || !doctor || !method || !collectedBy) {
       errEl.textContent = 'Please fill in all fields before saving.'; errEl.style.display = 'block'; return;
@@ -531,7 +532,7 @@
     if (isSplit && (cashAmt <= 0 && gpayAmt <= 0)) {
       errEl.textContent = 'Please enter Cash and/or GPay amounts for split payment.'; errEl.style.display = 'block'; return;
     }
-    if (!isSplit && !amount) {
+    if (!isSplit && rawAmount <= 0) {
       errEl.textContent = 'Please enter the amount paid.'; errEl.style.display = 'block'; return;
     }
     errEl.style.display = 'none';
@@ -552,9 +553,9 @@
       timestamp:   timestamp,
       dateKey:     dateKey,
       patient: patient, doctor: doctor,
-      amount:      parseFloat(amount).toFixed(2),
-      cashAmount:  isSplit ? cashAmt.toFixed(2) : (method === 'Cash' ? parseFloat(amount).toFixed(2) : '0'),
-      gpayAmount:  isSplit ? gpayAmt.toFixed(2) : (method === 'GPay' ? parseFloat(amount).toFixed(2) : '0'),
+      amount:      totalAmount.toFixed(2),
+      cashAmount:  isSplit ? cashAmt.toFixed(2) : (method === 'Cash' ? rawAmount.toFixed(2) : '0'),
+      gpayAmount:  isSplit ? gpayAmt.toFixed(2) : (method === 'GPay' ? rawAmount.toFixed(2) : '0'),
       method:      method, collectedBy: collectedBy
     };
 
