@@ -47,6 +47,12 @@
   .stat-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hint); margin-top: 3px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
   .filter-row select { flex: 1; padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); outline: none; appearance: none; }
+  .date-filter-bar { display: none; gap: 8px; margin-bottom: 14px; align-items: center; background: var(--accent-light); border: 1px solid #c4dece; border-radius: var(--radius-sm); padding: 10px 12px; }
+  .date-filter-bar.show { display: flex; }
+  .date-filter-bar label { font-size: 11px; font-weight: 600; color: var(--accent-text); white-space: nowrap; }
+  .date-filter-bar input[type=date] { flex: 1; padding: 6px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; }
+  .date-filter-bar input[type=date]:focus { border-color: var(--accent); }
+  .date-filter-clear { font-size: 11px; color: var(--accent-text); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; white-space: nowrap; padding: 0; text-decoration: underline; }
   .entry-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
   .entry-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .entry-name { font-size: 14px; font-weight: 600; color: var(--text); }
@@ -258,6 +264,14 @@
       <div class="stat-card"><div class="stat-val" id="stat-total">&#8377;0</div><div class="stat-lbl">Total</div></div>
       <div class="stat-card"><div class="stat-val" id="stat-count">0</div><div class="stat-lbl">Entries</div></div>
       <div class="stat-card"><div class="stat-val" id="stat-cash">&#8377;0</div><div class="stat-lbl">Cash</div></div>
+    </div>
+    <!-- Date filter — only visible in View All mode -->
+    <div class="date-filter-bar" id="dateFilterBar">
+      <label>&#128197; From</label>
+      <input type="date" id="filterDateFrom" onchange="renderLog()" />
+      <label>To</label>
+      <input type="date" id="filterDateTo" onchange="renderLog()" />
+      <button class="date-filter-clear" onclick="clearDateFilter()">Clear</button>
     </div>
     <div class="filter-row">
       <select id="filterMethod">
@@ -562,8 +576,29 @@
       viewAll=false;
       document.getElementById('view-all-btn').textContent='View all';
       document.getElementById('log-date-sub').textContent="Showing today's entries only";
+      document.getElementById('dateFilterBar').classList.remove('show');
+      clearDateFilter(true);
       renderLog();
     } else { pendingAction='viewall'; showPinModal('admin'); }
+  }
+
+  function clearDateFilter(silent) {
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    if (!silent) renderLog();
+  }
+
+  function getDateFilterRange() {
+    return {
+      from: document.getElementById('filterDateFrom').value,
+      to:   document.getElementById('filterDateTo').value
+    };
+  }
+
+  function parseDMY(str) {
+    var p = (str||'').split('/');
+    if (p.length < 3) return null;
+    return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
   }
 
   function showPinModal(level) {
@@ -587,6 +622,7 @@
       document.getElementById('pinOverlay').classList.remove('show');
       document.getElementById('view-all-btn').textContent='Today only';
       document.getElementById('log-date-sub').textContent='Showing all entries';
+      document.getElementById('dateFilterBar').classList.add('show');
       renderLog(); toast('Admin access granted');
     } else if(action==='settings'&&adminOk) {
       adminUnlocked=true; pendingAction=null;
@@ -694,7 +730,12 @@
   function renderLog() {
     var today=getTodayKey();
     var label=new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'long',year:'numeric'});
-    document.getElementById('log-date-heading').textContent = viewAll ? 'All entries' : 'Today \u2014 '+label;
+    var dr=viewAll?getDateFilterRange():{from:'',to:''};
+    var hasFilter=dr.from||dr.to;
+    var heading = viewAll ? (hasFilter ? 'Filtered entries' : 'All entries') : 'Today \u2014 '+label;
+    var subText  = viewAll ? (hasFilter ? (dr.from||'') + (dr.from&&dr.to?' → ':'') + (dr.to||'') : 'Showing all entries') : "Showing today's entries only";
+    document.getElementById('log-date-heading').textContent = heading;
+    document.getElementById('log-date-sub').textContent = subText;
     document.getElementById('log-list').innerHTML='<div class="empty-state"><span class="spinner"></span> Loading...</div>';
     fetchSheetStats(today);
     fetchSheetEntries(today);
@@ -732,6 +773,19 @@
           return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);
         });
         if(filter) list=list.filter(function(e){return e.method===filter;});
+        // Apply date range filter when in View All mode
+        if(viewAll) {
+          var dr=getDateFilterRange();
+          if(dr.from||dr.to){
+            list=list.filter(function(e){
+              var d=parseDMY(e.dateKey);
+              if(!d) return true;
+              if(dr.from && d < new Date(dr.from)) return false;
+              if(dr.to   && d > new Date(dr.to))   return false;
+              return true;
+            });
+          }
+        }
         renderEntryCards(list);
       })
       .catch(function(){renderLocalEntries(today);});
@@ -743,6 +797,18 @@
       return normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''))===normaliseDate(today);
     });
     if(filter) base=base.filter(function(e){return e.method===filter;});
+    if(viewAll) {
+      var dr=getDateFilterRange();
+      if(dr.from||dr.to){
+        base=base.filter(function(e){
+          var d=parseDMY(normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():'')));
+          if(!d) return true;
+          if(dr.from && d < new Date(dr.from)) return false;
+          if(dr.to   && d > new Date(dr.to))   return false;
+          return true;
+        });
+      }
+    }
     renderEntryCards(base);
   }
 
