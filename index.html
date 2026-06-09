@@ -598,7 +598,32 @@
   function parseDMY(str) {
     var p = (str||'').split('/');
     if (p.length < 3) return null;
-    return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+    // Set to noon to avoid timezone edge issues
+    return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]), 12, 0, 0);
+  }
+
+  // Parse yyyy-mm-dd (from date input) to midnight Date for inclusive comparison
+  function parseYMD(str) {
+    if (!str) return null;
+    var p = str.split('-');
+    return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]), 0, 0, 0);
+  }
+
+  // Inclusive date range check: entry date >= from AND <= to (end of day)
+  function inDateRange(dateKey, dr) {
+    if (!dr.from && !dr.to) return true;
+    var d = parseDMY(dateKey);
+    if (!d) return true;
+    if (dr.from) {
+      var from = parseYMD(dr.from);
+      if (d < from) return false;
+    }
+    if (dr.to) {
+      var to = parseYMD(dr.to);
+      to.setHours(23, 59, 59); // include full "to" day
+      if (d > to) return false;
+    }
+    return true;
   }
 
   function showPinModal(level) {
@@ -773,19 +798,20 @@
           return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);
         });
         if(filter) list=list.filter(function(e){return e.method===filter;});
-        // Apply date range filter when in View All mode
-        if(viewAll) {
-          var dr=getDateFilterRange();
-          if(dr.from||dr.to){
-            list=list.filter(function(e){
-              var d=parseDMY(e.dateKey);
-              if(!d) return true;
-              if(dr.from && d < new Date(dr.from)) return false;
-              if(dr.to   && d > new Date(dr.to))   return false;
-              return true;
-            });
-          }
+        // Apply date range + method filter for stats recalc
+        var dr=viewAll?getDateFilterRange():{from:'',to:''};
+        var methodFilter=filter;
+        if(viewAll && (dr.from||dr.to)){
+          list=list.filter(function(e){ return inDateRange(e.dateKey, dr); });
         }
+        // Recalculate stats from filtered list
+        var fTotal=0, fCash=0, fCount=0;
+        list.forEach(function(e){
+          var a=parseFloat(e.amount)||0; fTotal+=a; fCount++;
+          if(e.method==='Cash') fCash+=a;
+          else if(e.method==='Split') fCash+=(parseFloat(e.cashAmount)||0);
+        });
+        updateStats(fTotal, fCount, fCash);
         renderEntryCards(list);
       })
       .catch(function(){renderLocalEntries(today);});
@@ -801,14 +827,19 @@
       var dr=getDateFilterRange();
       if(dr.from||dr.to){
         base=base.filter(function(e){
-          var d=parseDMY(normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():'')));
-          if(!d) return true;
-          if(dr.from && d < new Date(dr.from)) return false;
-          if(dr.to   && d > new Date(dr.to))   return false;
-          return true;
+          var dk=normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''));
+          return inDateRange(dk, dr);
         });
       }
     }
+    // Recalculate stats from filtered list
+    var fTotal=0, fCash=0;
+    base.forEach(function(e){
+      var a=parseFloat(e.amount)||0; fTotal+=a;
+      if(e.method==='Cash') fCash+=a;
+      else if(e.method==='Split') fCash+=(parseFloat(e.cashAmount)||0);
+    });
+    updateStats(fTotal, base.length, fCash);
     renderEntryCards(base);
   }
 
@@ -833,35 +864,29 @@
   }
 
   function fetchSheetStats(today) {
-    if(!csvUrl){calcLocalStats(today);return;}
+    // Stats are now recalculated inside fetchSheetEntries/renderLocalEntries
+    // after all filters are applied — so this is only used as a loading placeholder
+    if(!csvUrl){ calcLocalStats(today); return; }
     document.getElementById('stat-total').innerHTML='<span class="spinner"></span>';
     document.getElementById('stat-count').innerHTML='<span class="spinner"></span>';
     document.getElementById('stat-cash').innerHTML='<span class="spinner"></span>';
-    fetch(csvUrl+'&t='+Date.now())
-      .then(function(r){return r.text();})
-      .then(function(csv){
-        var rows=parseCSV(csv),total=0,cash=0,count=0,tdN=normaliseDate(today);
-        for(var i=1;i<rows.length;i++){
-          var row=rows[i]; if(!row||row.length<5) continue;
-          var ts=(row[0]||'').replace(/"/g,'').trim();
-          var rd=normaliseDate(ts.split(',')[0].trim());
-          if(viewAll||rd===tdN){
-            var amt=parseFloat((row[3]||'0').replace(/"/g,''))||0;
-            var mth=(row[4]||'').replace(/"/g,'').trim();
-            var cAmt=parseFloat((row[5]||'0').replace(/"/g,''))||0;
-            total+=amt; count++;
-            if(mth==='Cash') cash+=amt;
-            else if(mth==='Split') cash+=cAmt;
-          }
-        }
-        updateStats(total,count,cash);
-      }).catch(function(){calcLocalStats(today);});
   }
 
   function calcLocalStats(today) {
     var base=viewAll?entries:entries.filter(function(e){
       return normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''))===normaliseDate(today);
     });
+    var filter=document.getElementById('filterMethod').value;
+    if(filter) base=base.filter(function(e){return e.method===filter;});
+    if(viewAll){
+      var dr=getDateFilterRange();
+      if(dr.from||dr.to){
+        base=base.filter(function(e){
+          var dk=normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''));
+          return inDateRange(dk,dr);
+        });
+      }
+    }
     var total=0,cash=0;
     base.forEach(function(e){
       var a=parseFloat(e.amount)||0; total+=a;
