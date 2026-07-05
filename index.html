@@ -460,7 +460,11 @@
     var drop=document.getElementById('dfDropdown'); drop.innerHTML=''; dfSuggestions=[]; dfActiveIdx=-1;
     var q=val.trim().toLowerCase();
     var pool=doctorNames.slice().sort();
-    dfSuggestions=q?pool.filter(function(n){return n.toLowerCase().indexOf(q)!==-1;}):pool;
+    var isWild=q.startsWith('*');
+    var qClean=isWild?q.slice(1):q;
+    dfSuggestions=qClean?pool.filter(function(n){
+      return isWild ? n.toLowerCase().indexOf(qClean)!==-1 : n.toLowerCase().indexOf(qClean)===0;
+    }):pool;
     if(!dfSuggestions.length){drop.classList.remove('open');return;}
     dfSuggestions.forEach(function(name){
       var li=document.createElement('div'); li.className='df-item';
@@ -665,7 +669,13 @@
     // Payment method
     if(method) list = list.filter(function(e){ return e.method===method; });
     // Doctor
-    if(filterDoctorValue) list = list.filter(function(e){ return e.doctor.toLowerCase().indexOf(filterDoctorValue.toLowerCase())!==-1; });
+    if(filterDoctorValue){
+      var _isWild=filterDoctorValue.startsWith('*');
+      var _q=_isWild?filterDoctorValue.slice(1).toLowerCase():filterDoctorValue.toLowerCase();
+      list=list.filter(function(e){
+        return _isWild ? e.doctor.toLowerCase().indexOf(_q)!==-1 : e.doctor.toLowerCase().indexOf(_q)===0;
+      });
+    }
     return list;
   }
 
