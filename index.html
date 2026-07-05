@@ -47,12 +47,6 @@
   .stat-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hint); margin-top: 3px; }
   .filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
   .filter-row select { flex: 1; padding: 8px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); outline: none; appearance: none; }
-  .date-filter-bar { display: none; gap: 8px; margin-bottom: 14px; align-items: center; background: var(--accent-light); border: 1px solid #c4dece; border-radius: var(--radius-sm); padding: 10px 12px; }
-  .date-filter-bar.show { display: flex; }
-  .date-filter-bar label { font-size: 11px; font-weight: 600; color: var(--accent-text); white-space: nowrap; }
-  .date-filter-bar input[type=date] { flex: 1; padding: 6px 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; }
-  .date-filter-bar input[type=date]:focus { border-color: var(--accent); }
-  .date-filter-clear { font-size: 11px; color: var(--accent-text); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; white-space: nowrap; padding: 0; text-decoration: underline; }
   .entry-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
   .entry-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .entry-name { font-size: 14px; font-weight: 600; color: var(--text); }
@@ -67,17 +61,11 @@
   .empty-icon { font-size: 36px; margin-bottom: 10px; }
   .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
   .settings-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
-  .info-box { background: var(--warn-light); border: 1px solid #f0c080; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; line-height: 1.8; color: var(--warn); margin-bottom: 12px; }
-  .info-box strong { color: #7a4000; }
   .url-row { display: flex; gap: 8px; }
   .url-row input { flex: 1; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); outline: none; }
   .save-btn { padding: 9px 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
   .save-btn:hover { opacity: 0.88; }
   .url-msg { font-size: 12px; margin-top: 7px; }
-  .code-box { background: #1a1916; border-radius: var(--radius-sm); padding: 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: #c8c0b4; line-height: 1.8; white-space: pre; overflow-x: auto; margin-bottom: 10px; }
-  .code-kw { color: #8ba8e0; } .code-fn { color: #e8c57a; } .code-str { color: #96c87a; } .code-var { color: #c0a0e8; }
-  .copy-btn { padding: 8px 16px; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; }
-  .copy-btn:hover { background: var(--surface2); }
   .danger-btn { padding: 9px 16px; background: transparent; color: var(--danger); border: 1px solid #e8b4b0; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
   .danger-btn:hover { background: var(--danger-light); }
   .pin-overlay { display: none; position: fixed; inset: 0; background: rgba(26,25,22,0.6); z-index: 100; align-items: center; justify-content: center; }
@@ -111,61 +99,43 @@
   .split-row { display: none; gap: 10px; margin-bottom: 12px; }
   .split-row.show { display: flex; }
 
-  /* ── Doctor Autocomplete ── */
+  /* ── Doctor Autocomplete (form) ── */
   .autocomplete-wrap { position: relative; }
-  .autocomplete-wrap input { width: 100%; }
-  .ac-ghost {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    padding: 11px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: var(--hint);
-    pointer-events: none;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-    overflow: hidden;
-  }
+  .ac-ghost { position: absolute; top:0; left:0; right:0; bottom:0; padding: 11px 14px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--hint); pointer-events:none; border:1px solid transparent; border-radius:var(--radius-sm); white-space:nowrap; overflow:hidden; }
   .ac-ghost span.typed { color: transparent; }
-  .ac-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 4px 16px rgba(26,25,22,0.10);
-    z-index: 50;
-    max-height: 200px;
-    overflow-y: auto;
-  }
+  .ac-dropdown { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); box-shadow:0 4px 16px rgba(26,25,22,0.10); z-index:50; max-height:200px; overflow-y:auto; }
   .ac-dropdown.open { display: block; }
-  .ac-item {
-    padding: 10px 14px;
-    font-size: 13px;
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background 0.1s;
-  }
+  .ac-item { padding:10px 14px; font-size:13px; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:8px; transition:background 0.1s; }
   .ac-item:hover, .ac-item.active { background: var(--accent-light); }
-  .ac-item .ac-icon { font-size: 11px; color: var(--hint); flex-shrink: 0; }
-  .ac-item .ac-match { font-weight: 600; color: var(--accent-text); }
-  .ac-hint {
-    font-size: 10px;
-    color: var(--hint);
-    padding: 4px 14px 8px;
-    font-style: italic;
-  }
+  .ac-item .ac-icon { font-size:11px; color:var(--hint); flex-shrink:0; }
+  .ac-item .ac-match { font-weight:600; color:var(--accent-text); }
+  .ac-hint { font-size:10px; color:var(--hint); padding:4px 14px 8px; font-style:italic; }
+
+  /* ── Date filter bar (View All) ── */
+  .date-filter-bar { display:none; gap:8px; margin-bottom:14px; align-items:center; background:var(--accent-light); border:1px solid #c4dece; border-radius:var(--radius-sm); padding:10px 12px; }
+  .date-filter-bar.show { display: flex; }
+  .date-filter-bar label { font-size:11px; font-weight:600; color:var(--accent-text); white-space:nowrap; }
+  .date-filter-bar input[type=date] { flex:1; padding:6px 10px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); outline:none; }
+  .date-filter-bar input[type=date]:focus { border-color: var(--accent); }
+  .date-filter-clear { font-size:11px; color:var(--accent-text); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; white-space:nowrap; padding:0; text-decoration:underline; }
+
+  /* ── Doctor filter (log tab) ── */
+  .doctor-filter-wrap { position:relative; margin-bottom:14px; }
+  .doctor-filter-wrap input { width:100%; padding:8px 34px 8px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); outline:none; }
+  .doctor-filter-wrap input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(44,95,63,0.08); }
+  .doctor-filter-wrap input::placeholder { color:var(--hint); }
+  .df-icon { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--hint); pointer-events:none; }
+  .df-clear-x { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--hint); background:none; border:none; cursor:pointer; padding:0; display:none; line-height:1; }
+  .df-clear-x.show { display: block; }
+  .df-dropdown { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); box-shadow:0 4px 16px rgba(26,25,22,0.10); z-index:50; max-height:180px; overflow-y:auto; }
+  .df-dropdown.open { display: block; }
+  .df-item { padding:9px 14px; font-size:13px; color:var(--text); cursor:pointer; }
+  .df-item:hover, .df-item.sel { background:var(--accent-light); color:var(--accent-text); }
+  .df-match { font-weight:600; }
 </style>
 </head>
 <body>
 <div class="app">
-
   <div class="header">
     <div>
       <div class="header-title">RMS Fetal Diagnostics</div>
@@ -190,8 +160,6 @@
       <label for="patientName">Patient name</label>
       <input type="text" id="patientName" placeholder="Full name" autocomplete="off" />
     </div>
-
-    <!-- ── Doctor Name with Autocomplete ── -->
     <div class="field">
       <label for="doctorName">Referred doctor</label>
       <div class="autocomplete-wrap" id="doctorWrap">
@@ -200,7 +168,6 @@
         <div class="ac-dropdown" id="doctorDropdown"></div>
       </div>
     </div>
-
     <div class="section-label">Payment details</div>
     <div class="grid2">
       <div class="field" id="singleAmountWrap">
@@ -265,7 +232,8 @@
       <div class="stat-card"><div class="stat-val" id="stat-count">0</div><div class="stat-lbl">Entries</div></div>
       <div class="stat-card"><div class="stat-val" id="stat-cash">&#8377;0</div><div class="stat-lbl">Cash</div></div>
     </div>
-    <!-- Date filter — only visible in View All mode -->
+
+    <!-- Date filter: View All only -->
     <div class="date-filter-bar" id="dateFilterBar">
       <label>&#128197; From</label>
       <input type="date" id="filterDateFrom" onchange="renderLog()" />
@@ -273,8 +241,17 @@
       <input type="date" id="filterDateTo" onchange="renderLog()" />
       <button class="date-filter-clear" onclick="clearDateFilter()">Clear</button>
     </div>
+
+    <!-- Doctor filter: always visible in Log -->
+    <div class="doctor-filter-wrap" id="doctorFilterWrap">
+      <input type="text" id="filterDoctorInput" placeholder="&#128269; Filter by doctor..." autocomplete="off" />
+      <span class="df-icon" id="dfIcon">&#9660;</span>
+      <button class="df-clear-x" id="dfClearX" onclick="clearDoctorFilter()" title="Clear">&#10005;</button>
+      <div class="df-dropdown" id="dfDropdown"></div>
+    </div>
+
     <div class="filter-row">
-      <select id="filterMethod">
+      <select id="filterMethod" onchange="renderLog()">
         <option value="">All methods</option>
         <option value="Cash">Cash only</option>
         <option value="GPay">GPay only</option>
@@ -334,10 +311,8 @@
     <div class="pin-title" id="pinTitle">Access required</div>
     <div class="pin-sub" id="pinSub">Enter your PIN to continue</div>
     <div class="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
     </div>
     <div class="pin-error" id="pinError"></div>
     <div class="pin-grid">
@@ -361,10 +336,11 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  /* ── State ── */
   var entries = [];
   var _c = ['aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Y=','eWNid0lYekV6WUU0R2swQms0NGZNNEQwb2lmdEU4eEtUR2xmQUw=','bUdkTFlIUFhwZU1ZQ2RJQTNmWlotWTV6bmJpWE1LaEpRL2V4ZWM='];
   var _d = ['aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vc3ByZWFkc2hlZXRzL2QvZS8yUEFDWC0xdlMwY3A=','V2lDdVNnZWowWkJ5NGR1MnlWNzN0aFJPQjYwMVl0MDU2bElnRmhyZ0g4NTQybmdmUG5MTmU=','MERMV0I1eVlkbmdHM1Z0OEpodkRnL3B1Yj9naWQ9MCZzaW5nbGU9dHJ1ZSZvdXRwdXQ9Y3N2'];
-  function _x(a) { return a.map(function(s){return atob(s);}).join(''); }
+  function _x(a){return a.map(function(s){return atob(s);}).join('');}
   var sheetUrl = _x(_c);
   var csvUrl   = _x(_d);
   var viewAll  = false;
@@ -372,374 +348,301 @@
   var DEFAULT_STAFF_PIN = _x(['MDg1Mw==']);
   var DEFAULT_ADMIN_PIN = _x(['MjIzNg==']);
 
-  function getStaffPin() { try { return localStorage.getItem('clinic_staff_pin') || DEFAULT_STAFF_PIN; } catch(e) { return DEFAULT_STAFF_PIN; } }
-  function getAdminPin()  { try { return localStorage.getItem('clinic_admin_pin')  || DEFAULT_ADMIN_PIN;  } catch(e) { return DEFAULT_ADMIN_PIN;  } }
+  /* ── Doctor names cache ── */
+  var doctorNames = [];
 
-  /* ════════════════════════════════════════════
-     DOCTOR AUTOCOMPLETE
-     Pulls unique doctor names from the Google
-     Sheet CSV (same source as the log).
-     Falls back to local entries if CSV fails.
-  ════════════════════════════════════════════ */
-  var doctorNames = [];   // cached unique list
-  var acActiveIdx = -1;   // keyboard nav index
-  var acSuggestions = []; // current filtered list
+  /* ── Doctor filter (log) state ── */
+  var dfActiveIdx = -1;
+  var dfSuggestions = [];
+  var filterDoctorValue = '';
 
+  function getStaffPin(){try{return localStorage.getItem('clinic_staff_pin')||DEFAULT_STAFF_PIN;}catch(e){return DEFAULT_STAFF_PIN;}}
+  function getAdminPin() {try{return localStorage.getItem('clinic_admin_pin') ||DEFAULT_ADMIN_PIN; }catch(e){return DEFAULT_ADMIN_PIN; }}
+
+  /* ════════════════════════════════════
+     DOCTOR NAMES — load from sheet CSV
+  ════════════════════════════════════ */
   function loadDoctorNames() {
-    // Build from local entries immediately
-    var localNames = [];
-    entries.forEach(function(e){ if(e.doctor && localNames.indexOf(e.doctor)===-1) localNames.push(e.doctor); });
-    doctorNames = localNames;
-
-    // Then enrich from the Google Sheet CSV
+    var local = [];
+    entries.forEach(function(e){ if(e.doctor && local.indexOf(e.doctor)===-1) local.push(e.doctor); });
+    doctorNames = local;
     if (!csvUrl) return;
-    fetch(csvUrl + '&t=' + Date.now())
-      .then(function(r){ return r.text(); })
+    fetch(csvUrl+'&t='+Date.now())
+      .then(function(r){return r.text();})
       .then(function(csv){
-        var rows = parseCSV(csv);
-        var names = [];
-        for (var i = 1; i < rows.length; i++) {
-          var row = rows[i];
-          if (!row || row.length < 3) continue;
-          var name = (row[2] || '').replace(/"/g,'').trim();
-          if (name && names.indexOf(name) === -1) names.push(name);
+        var rows=parseCSV(csv);
+        for(var i=1;i<rows.length;i++){
+          var name=(rows[i][2]||'').replace(/"/g,'').trim();
+          if(name && doctorNames.indexOf(name)===-1) doctorNames.push(name);
         }
-        // Merge local + sheet names, deduplicated
-        names.forEach(function(n){ if(doctorNames.indexOf(n)===-1) doctorNames.push(n); });
         doctorNames.sort();
-      })
-      .catch(function(){});  // silently fall back to local
+      }).catch(function(){});
   }
+
+  /* ════════════════════════════════════
+     DOCTOR AUTOCOMPLETE (form field)
+  ════════════════════════════════════ */
+  var acActiveIdx = -1;
+  var acSuggestions = [];
 
   function initDoctorAC() {
     var inp  = document.getElementById('doctorName');
     var drop = document.getElementById('doctorDropdown');
-    var ghost = document.getElementById('doctorGhost');
-
-    inp.addEventListener('input', function(){
-      acActiveIdx = -1;
-      renderDropdown(this.value);
-      renderGhost(this.value);
-    });
-
+    inp.addEventListener('input', function(){ acActiveIdx=-1; renderACDropdown(this.value); renderACGhost(this.value); });
     inp.addEventListener('keydown', function(e){
-      var items = drop.querySelectorAll('.ac-item');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        acActiveIdx = Math.min(acActiveIdx + 1, items.length - 1);
-        updateACActive(items);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        acActiveIdx = Math.max(acActiveIdx - 1, 0);
-        updateACActive(items);
-      } else if (e.key === 'Tab' && acSuggestions.length > 0) {
-        // Tab fills the top suggestion (like Word)
-        e.preventDefault();
-        var pick = acActiveIdx >= 0 ? acSuggestions[acActiveIdx] : acSuggestions[0];
-        selectDoctor(pick);
-      } else if (e.key === 'Enter' && acActiveIdx >= 0) {
-        e.preventDefault();
-        selectDoctor(acSuggestions[acActiveIdx]);
-      } else if (e.key === 'Escape') {
-        closeDropdown();
-      }
+      var items=drop.querySelectorAll('.ac-item');
+      if(e.key==='ArrowDown'){e.preventDefault();acActiveIdx=Math.min(acActiveIdx+1,items.length-1);updateACActive(items);}
+      else if(e.key==='ArrowUp'){e.preventDefault();acActiveIdx=Math.max(acActiveIdx-1,0);updateACActive(items);}
+      else if(e.key==='Tab'&&acSuggestions.length>0){e.preventDefault();selectAC(acActiveIdx>=0?acSuggestions[acActiveIdx]:acSuggestions[0]);}
+      else if(e.key==='Enter'&&acActiveIdx>=0){e.preventDefault();selectAC(acSuggestions[acActiveIdx]);}
+      else if(e.key==='Escape'){closeAC();}
     });
-
-    // Close on outside click
-    document.addEventListener('click', function(e){
-      if (!document.getElementById('doctorWrap').contains(e.target)) closeDropdown();
-    });
+    document.addEventListener('click',function(e){if(!document.getElementById('doctorWrap').contains(e.target))closeAC();});
   }
 
-  function renderDropdown(val) {
-    var drop = document.getElementById('doctorDropdown');
-    var q = val.trim().toLowerCase();
-    drop.innerHTML = '';
-    acSuggestions = [];
-
-    if (!q) { drop.classList.remove('open'); return; }
-
-    acSuggestions = doctorNames.filter(function(n){
-      return n.toLowerCase().indexOf(q) === 0 && n.toLowerCase() !== q;
-    });
-
-    // Also include contains-matches (secondary), but starts-with first
-    var contains = doctorNames.filter(function(n){
-      return n.toLowerCase().indexOf(q) > 0;
-    });
-    contains.forEach(function(n){ if(acSuggestions.indexOf(n)===-1) acSuggestions.push(n); });
-
-    if (!acSuggestions.length) { drop.classList.remove('open'); return; }
-
-    acSuggestions.slice(0, 8).forEach(function(name, idx){
-      var li = document.createElement('div');
-      li.className = 'ac-item';
-      // Highlight matched portion
-      var lo = name.toLowerCase(), qi = lo.indexOf(q);
-      var before = name.slice(0, qi);
-      var matched = name.slice(qi, qi + q.length);
-      var after   = name.slice(qi + q.length);
-      li.innerHTML = '<span class="ac-icon">&#9758;</span>' +
-        (before ? before : '') +
-        '<span class="ac-match">' + matched + '</span>' + after;
-      li.addEventListener('mousedown', function(e){
-        e.preventDefault(); // prevent blur
-        selectDoctor(name);
-      });
+  function renderACDropdown(val){
+    var drop=document.getElementById('doctorDropdown');
+    var q=val.trim().toLowerCase(); drop.innerHTML=''; acSuggestions=[];
+    if(!q){drop.classList.remove('open');return;}
+    acSuggestions=doctorNames.filter(function(n){return n.toLowerCase().indexOf(q)===0&&n.toLowerCase()!==q;});
+    var contains=doctorNames.filter(function(n){return n.toLowerCase().indexOf(q)>0;});
+    contains.forEach(function(n){if(acSuggestions.indexOf(n)===-1)acSuggestions.push(n);});
+    if(!acSuggestions.length){drop.classList.remove('open');return;}
+    acSuggestions.slice(0,8).forEach(function(name){
+      var li=document.createElement('div'); li.className='ac-item';
+      var lo=name.toLowerCase(),qi=lo.indexOf(q);
+      li.innerHTML='<span class="ac-icon">&#9758;</span>'+name.slice(0,qi)+'<span class="ac-match">'+name.slice(qi,qi+q.length)+'</span>'+name.slice(qi+q.length);
+      li.addEventListener('mousedown',function(e){e.preventDefault();selectAC(name);});
       drop.appendChild(li);
     });
-
-    // Tab hint
-    var hint = document.createElement('div');
-    hint.className = 'ac-hint';
-    hint.textContent = 'Tab to fill \u2022 \u2191\u2193 to navigate \u2022 Enter to select';
-    drop.appendChild(hint);
-
+    var hint=document.createElement('div'); hint.className='ac-hint'; hint.textContent='Tab to fill \u2022 \u2191\u2193 to navigate'; drop.appendChild(hint);
     drop.classList.add('open');
   }
 
-  function renderGhost(val) {
-    var ghost = document.getElementById('doctorGhost');
-    var q = val.trim().toLowerCase();
-    if (!q) { ghost.innerHTML = ''; return; }
-
-    // Find first name that starts with typed text
-    var match = doctorNames.find(function(n){ return n.toLowerCase().indexOf(q) === 0 && n.toLowerCase() !== q; });
-    if (!match) { ghost.innerHTML = ''; return; }
-
-    // Show typed part as invisible + rest as grey hint
-    ghost.innerHTML = '<span class="typed">' + val + '</span>' + match.slice(val.length);
+  function renderACGhost(val){
+    var ghost=document.getElementById('doctorGhost'); var q=val.trim().toLowerCase();
+    if(!q){ghost.innerHTML='';return;}
+    var match=doctorNames.find(function(n){return n.toLowerCase().indexOf(q)===0&&n.toLowerCase()!==q;});
+    if(!match){ghost.innerHTML='';return;}
+    ghost.innerHTML='<span class="typed">'+val+'</span>'+match.slice(val.length);
   }
 
-  function updateACActive(items) {
-    items.forEach(function(el, i){ el.classList.toggle('active', i === acActiveIdx); });
-  }
+  function updateACActive(items){items.forEach(function(el,i){el.classList.toggle('active',i===acActiveIdx);});}
+  function selectAC(name){document.getElementById('doctorName').value=name;document.getElementById('doctorGhost').innerHTML='';closeAC();}
+  function closeAC(){document.getElementById('doctorDropdown').classList.remove('open');document.getElementById('doctorGhost').innerHTML='';acSuggestions=[];acActiveIdx=-1;}
 
-  function selectDoctor(name) {
-    document.getElementById('doctorName').value = name;
-    document.getElementById('doctorGhost').innerHTML = '';
-    closeDropdown();
-  }
-
-  function closeDropdown() {
-    document.getElementById('doctorDropdown').classList.remove('open');
-    document.getElementById('doctorGhost').innerHTML = '';
-    acSuggestions = [];
-    acActiveIdx = -1;
-  }
-  /* ════════════════════════════════════════════ */
-
-  function init() {
-    try { entries = JSON.parse(localStorage.getItem('clinic_entries') || '[]'); } catch(e) { entries = []; }
-    document.getElementById('sheetUrl').value = sheetUrl;
-    setConnected(true);
-    document.getElementById('filterMethod').addEventListener('change', renderLog);
-    document.getElementById('view-all-btn').addEventListener('click', toggleViewAll);
-    document.getElementById('paymentMethod').addEventListener('change', function() {
-      var isSplit = this.value === 'Split';
-      document.getElementById('splitRow').classList.toggle('show', isSplit);
-      document.getElementById('singleAmountWrap').style.display = isSplit ? 'none' : 'block';
+  /* ════════════════════════════════════
+     DOCTOR FILTER (log tab)
+  ════════════════════════════════════ */
+  function initDoctorFilter() {
+    var inp = document.getElementById('filterDoctorInput');
+    inp.addEventListener('input', function(){
+      filterDoctorValue = this.value.trim();
+      document.getElementById('dfClearX').classList.toggle('show', filterDoctorValue.length>0);
+      document.getElementById('dfIcon').style.display = filterDoctorValue.length>0 ? 'none' : '';
+      renderDFDropdown(this.value);
+      renderLog();
     });
-    if (!staffUnlocked) { pendingAction = 'form'; showPinModal('staff'); }
-    var y = new Date(); y.setDate(y.getDate()-1);
-    document.getElementById('pastDate').max = y.toISOString().split('T')[0];
+    inp.addEventListener('focus', function(){ renderDFDropdown(this.value); });
+    inp.addEventListener('keydown', function(e){
+      var items=document.getElementById('dfDropdown').querySelectorAll('.df-item');
+      if(e.key==='ArrowDown'){e.preventDefault();dfActiveIdx=Math.min(dfActiveIdx+1,items.length-1);updateDFActive(items);}
+      else if(e.key==='ArrowUp'){e.preventDefault();dfActiveIdx=Math.max(dfActiveIdx-1,0);updateDFActive(items);}
+      else if((e.key==='Enter'||e.key==='Tab')&&dfActiveIdx>=0){e.preventDefault();selectDF(dfSuggestions[dfActiveIdx]);}
+      else if(e.key==='Escape'){closeDFDropdown();}
+    });
+    document.addEventListener('click',function(e){
+      if(!document.getElementById('doctorFilterWrap').contains(e.target)) closeDFDropdown();
+    });
+  }
 
-    // Init doctor autocomplete
+  function renderDFDropdown(val){
+    var drop=document.getElementById('dfDropdown'); drop.innerHTML=''; dfSuggestions=[]; dfActiveIdx=-1;
+    var q=val.trim().toLowerCase();
+    var pool=doctorNames.slice().sort();
+    dfSuggestions=q?pool.filter(function(n){return n.toLowerCase().indexOf(q)!==-1;}):pool;
+    if(!dfSuggestions.length){drop.classList.remove('open');return;}
+    dfSuggestions.forEach(function(name){
+      var li=document.createElement('div'); li.className='df-item';
+      if(q){
+        var lo=name.toLowerCase(),qi=lo.indexOf(q);
+        li.innerHTML=name.slice(0,qi)+'<span class="df-match">'+name.slice(qi,qi+q.length)+'</span>'+name.slice(qi+q.length);
+      } else { li.textContent=name; }
+      li.addEventListener('mousedown',function(e){e.preventDefault();selectDF(name);});
+      drop.appendChild(li);
+    });
+    drop.classList.add('open');
+  }
+
+  function updateDFActive(items){items.forEach(function(el,i){el.classList.toggle('sel',i===dfActiveIdx);});}
+  function selectDF(name){
+    document.getElementById('filterDoctorInput').value=name;
+    filterDoctorValue=name;
+    document.getElementById('dfClearX').classList.add('show');
+    document.getElementById('dfIcon').style.display='none';
+    closeDFDropdown(); renderLog();
+  }
+  function clearDoctorFilter(){
+    document.getElementById('filterDoctorInput').value='';
+    filterDoctorValue='';
+    document.getElementById('dfClearX').classList.remove('show');
+    document.getElementById('dfIcon').style.display='';
+    closeDFDropdown(); renderLog();
+  }
+  function closeDFDropdown(){document.getElementById('dfDropdown').classList.remove('open');dfSuggestions=[];dfActiveIdx=-1;}
+
+  /* ════════════════════════════════════
+     DATE FILTER helpers
+  ════════════════════════════════════ */
+  function getDateFilterRange(){return{from:document.getElementById('filterDateFrom').value,to:document.getElementById('filterDateTo').value};}
+  function clearDateFilter(silent){
+    document.getElementById('filterDateFrom').value='';
+    document.getElementById('filterDateTo').value='';
+    if(!silent) renderLog();
+  }
+  function parseDMY(str){
+    var p=(str||'').split('/'); if(p.length<3)return null;
+    return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]),12,0,0);
+  }
+  function parseYMD(str){
+    if(!str)return null; var p=str.split('-');
+    return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]),0,0,0);
+  }
+  function inDateRange(dateKey,dr){
+    if(!dr.from&&!dr.to)return true;
+    var d=parseDMY(dateKey); if(!d)return true;
+    if(dr.from&&d<parseYMD(dr.from))return false;
+    if(dr.to){var to=parseYMD(dr.to);to.setHours(23,59,59);if(d>to)return false;}
+    return true;
+  }
+
+  /* ════════════════════════════════════
+     INIT
+  ════════════════════════════════════ */
+  function init(){
+    try{entries=JSON.parse(localStorage.getItem('clinic_entries')||'[]');}catch(e){entries=[];}
+    document.getElementById('sheetUrl').value=sheetUrl;
+    setConnected(true);
+    document.getElementById('view-all-btn').addEventListener('click',toggleViewAll);
+    document.getElementById('paymentMethod').addEventListener('change',function(){
+      var isSplit=this.value==='Split';
+      document.getElementById('splitRow').classList.toggle('show',isSplit);
+      document.getElementById('singleAmountWrap').style.display=isSplit?'none':'block';
+    });
+    var y=new Date(); y.setDate(y.getDate()-1);
+    document.getElementById('pastDate').max=y.toISOString().split('T')[0];
     initDoctorAC();
+    initDoctorFilter();
     loadDoctorNames();
+    if(!staffUnlocked){pendingAction='form';showPinModal('staff');}
   }
 
-  function togglePastDate() {
-    var cb = document.getElementById('pastDateCheck');
-    cb.checked = !cb.checked;
-    document.getElementById('pastDateField').classList.toggle('show', cb.checked);
-    if (!cb.checked) document.getElementById('pastDate').value = '';
+  function togglePastDate(){
+    var cb=document.getElementById('pastDateCheck'); cb.checked=!cb.checked;
+    document.getElementById('pastDateField').classList.toggle('show',cb.checked);
+    if(!cb.checked)document.getElementById('pastDate').value='';
   }
 
-  function switchTab(name) {
-    if ((name==='form'||name==='log') && !staffUnlocked) { pendingAction=name; showPinModal('staff'); return; }
-    if (name==='settings' && !adminUnlocked) { pendingAction='settings'; showPinModal('admin'); return; }
+  function switchTab(name){
+    if((name==='form'||name==='log')&&!staffUnlocked){pendingAction=name;showPinModal('staff');return;}
+    if(name==='settings'&&!adminUnlocked){pendingAction='settings';showPinModal('admin');return;}
     doSwitchTab(name);
   }
-
-  function doSwitchTab(name) {
-    document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('active',['form','log','settings'][i]===name); });
-    document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  function doSwitchTab(name){
+    document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',['form','log','settings'][i]===name);});
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
     document.getElementById('panel-'+name).classList.add('active');
-    if (name==='log') renderLog();
-    // Refresh doctor names when returning to form
-    if (name==='form') loadDoctorNames();
+    if(name==='log') renderLog();
+    if(name==='form') loadDoctorNames();
   }
 
-  function toggleViewAll() {
-    if (viewAll) {
+  function toggleViewAll(){
+    if(viewAll){
       viewAll=false;
       document.getElementById('view-all-btn').textContent='View all';
       document.getElementById('log-date-sub').textContent="Showing today's entries only";
       document.getElementById('dateFilterBar').classList.remove('show');
-      clearDateFilter(true);
-      renderLog();
+      clearDateFilter(true); renderLog();
     } else { pendingAction='viewall'; showPinModal('admin'); }
   }
 
-  function clearDateFilter(silent) {
-    document.getElementById('filterDateFrom').value = '';
-    document.getElementById('filterDateTo').value = '';
-    if (!silent) renderLog();
-  }
-
-  function getDateFilterRange() {
-    return {
-      from: document.getElementById('filterDateFrom').value,
-      to:   document.getElementById('filterDateTo').value
-    };
-  }
-
-  function parseDMY(str) {
-    var p = (str||'').split('/');
-    if (p.length < 3) return null;
-    // Set to noon to avoid timezone edge issues
-    return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]), 12, 0, 0);
-  }
-
-  // Parse yyyy-mm-dd (from date input) to midnight Date for inclusive comparison
-  function parseYMD(str) {
-    if (!str) return null;
-    var p = str.split('-');
-    return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]), 0, 0, 0);
-  }
-
-  // Inclusive date range check: entry date >= from AND <= to (end of day)
-  function inDateRange(dateKey, dr) {
-    if (!dr.from && !dr.to) return true;
-    var d = parseDMY(dateKey);
-    if (!d) return true;
-    if (dr.from) {
-      var from = parseYMD(dr.from);
-      if (d < from) return false;
-    }
-    if (dr.to) {
-      var to = parseYMD(dr.to);
-      to.setHours(23, 59, 59); // include full "to" day
-      if (d > to) return false;
-    }
-    return true;
-  }
-
-  function showPinModal(level) {
+  /* ── PIN ── */
+  function showPinModal(level){
     pinBuffer=''; updatePinDots(); document.getElementById('pinError').textContent='';
-    document.getElementById('pinTitle').textContent = level==='staff' ? 'Staff access' : 'Admin access';
-    document.getElementById('pinSub').textContent   = level==='staff' ? "Enter staff PIN to continue" : 'Enter admin PIN to continue';
+    document.getElementById('pinTitle').textContent=level==='staff'?'Staff access':'Admin access';
+    document.getElementById('pinSub').textContent=level==='staff'?'Enter staff PIN to continue':'Enter admin PIN to continue';
     document.getElementById('pinOverlay').classList.add('show');
   }
-  function pinKey(d) { if(pinBuffer.length>=4)return; pinBuffer+=d; updatePinDots(); if(pinBuffer.length===4)setTimeout(checkPin,150); }
-  function pinClear() { pinBuffer=pinBuffer.slice(0,-1); updatePinDots(); document.getElementById('pinError').textContent=''; }
-  function pinCancel() { pinBuffer=''; pendingAction=null; updatePinDots(); document.getElementById('pinOverlay').classList.remove('show'); }
-  function updatePinDots() { for(var i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('filled',i<pinBuffer.length); }
-
-  function checkPin() {
-    var action=pendingAction, staffOk=pinBuffer===getStaffPin(), adminOk=pinBuffer===getAdminPin();
-    if((action==='log'||action==='form')&&(staffOk||adminOk)) {
-      staffUnlocked=true; if(adminOk)adminUnlocked=true; pendingAction=null;
-      document.getElementById('pinOverlay').classList.remove('show'); doSwitchTab('form'); toast('Access granted');
-    } else if(action==='viewall'&&adminOk) {
-      adminUnlocked=true; viewAll=true; pendingAction=null;
+  function pinKey(d){if(pinBuffer.length>=4)return;pinBuffer+=d;updatePinDots();if(pinBuffer.length===4)setTimeout(checkPin,150);}
+  function pinClear(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();document.getElementById('pinError').textContent='';}
+  function pinCancel(){pinBuffer='';pendingAction=null;updatePinDots();document.getElementById('pinOverlay').classList.remove('show');}
+  function updatePinDots(){for(var i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinBuffer.length);}
+  function checkPin(){
+    var action=pendingAction,staffOk=pinBuffer===getStaffPin(),adminOk=pinBuffer===getAdminPin();
+    if((action==='log'||action==='form')&&(staffOk||adminOk)){
+      staffUnlocked=true;if(adminOk)adminUnlocked=true;pendingAction=null;
+      document.getElementById('pinOverlay').classList.remove('show');doSwitchTab('form');toast('Access granted');
+    } else if(action==='viewall'&&adminOk){
+      adminUnlocked=true;viewAll=true;pendingAction=null;
       document.getElementById('pinOverlay').classList.remove('show');
       document.getElementById('view-all-btn').textContent='Today only';
       document.getElementById('log-date-sub').textContent='Showing all entries';
       document.getElementById('dateFilterBar').classList.add('show');
-      renderLog(); toast('Admin access granted');
-    } else if(action==='settings'&&adminOk) {
-      adminUnlocked=true; pendingAction=null;
-      document.getElementById('pinOverlay').classList.remove('show'); doSwitchTab('settings'); toast('Admin access granted');
+      renderLog();toast('Admin access granted');
+    } else if(action==='settings'&&adminOk){
+      adminUnlocked=true;pendingAction=null;
+      document.getElementById('pinOverlay').classList.remove('show');doSwitchTab('settings');toast('Admin access granted');
     } else {
-      document.getElementById('pinError').textContent='Incorrect PIN. Try again.'; pinBuffer=''; updatePinDots();
+      document.getElementById('pinError').textContent='Incorrect PIN. Try again.';pinBuffer='';updatePinDots();
     }
   }
 
-  function setConnected(yes) {
-    document.getElementById('dot').className='dot'+(yes?' connected':'');
-    document.getElementById('sync-label').textContent=yes?'Connected':'Not connected';
-  }
-  function toast(msg) {
-    var el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
-    setTimeout(function(){el.classList.remove('show');},2500);
-  }
+  function setConnected(yes){document.getElementById('dot').className='dot'+(yes?' connected':'');document.getElementById('sync-label').textContent=yes?'Connected':'Not connected';}
+  function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
 
-  function submitEntry() {
-    var patient     = document.getElementById('patientName').value.trim();
-    var doctor      = document.getElementById('doctorName').value.trim();
-    var method      = document.getElementById('paymentMethod').value;
-    var collectedBy = document.getElementById('collectedBy').value.trim();
-    var errEl       = document.getElementById('form-error');
-    var isSplit     = method === 'Split';
-    var cashAmt     = parseFloat(document.getElementById('cashAmount').value) || 0;
-    var gpayAmt     = parseFloat(document.getElementById('gpayAmount').value) || 0;
-    var singleAmt   = parseFloat(document.getElementById('amountPaid').value) || 0;
-    var totalAmount = isSplit ? cashAmt + gpayAmt : singleAmt;
-
-    if (!patient||!doctor||!method||!collectedBy) {
-      errEl.textContent='Please fill in all fields before saving.'; errEl.style.display='block'; return;
-    }
-    if (isSplit && cashAmt<=0 && gpayAmt<=0) {
-      errEl.textContent='Please enter Cash and/or GPay amounts.'; errEl.style.display='block'; return;
-    }
-    if (!isSplit && singleAmt<=0) {
-      errEl.textContent='Please enter the amount paid.'; errEl.style.display='block'; return;
-    }
+  /* ── SUBMIT ── */
+  function submitEntry(){
+    var patient=document.getElementById('patientName').value.trim();
+    var doctor=document.getElementById('doctorName').value.trim();
+    var method=document.getElementById('paymentMethod').value;
+    var collectedBy=document.getElementById('collectedBy').value.trim();
+    var errEl=document.getElementById('form-error');
+    var isSplit=method==='Split';
+    var cashAmt=parseFloat(document.getElementById('cashAmount').value)||0;
+    var gpayAmt=parseFloat(document.getElementById('gpayAmount').value)||0;
+    var singleAmt=parseFloat(document.getElementById('amountPaid').value)||0;
+    var totalAmount=isSplit?cashAmt+gpayAmt:singleAmt;
+    if(!patient||!doctor||!method||!collectedBy){errEl.textContent='Please fill in all fields before saving.';errEl.style.display='block';return;}
+    if(isSplit&&cashAmt<=0&&gpayAmt<=0){errEl.textContent='Please enter Cash and/or GPay amounts.';errEl.style.display='block';return;}
+    if(!isSplit&&singleAmt<=0){errEl.textContent='Please enter the amount paid.';errEl.style.display='block';return;}
     errEl.style.display='none';
-
     var isPast=document.getElementById('pastDateCheck').checked;
     var pastVal=document.getElementById('pastDate').value;
-    if (isPast&&!pastVal) { errEl.textContent='Please select a past date.'; errEl.style.display='block'; return; }
-    var now = isPast ? new Date(pastVal+'T12:00:00') : new Date();
-    var opts = { timeZone:'Asia/Kolkata' };
-    var timestamp = isPast ? now.toLocaleDateString('en-IN',opts)+', 12:00:00 (past entry)' : now.toLocaleString('en-IN',opts);
-    var dateKey = now.toLocaleDateString('en-IN',opts);
-
-    var entry = {
-      timestamp:   timestamp,
-      dateKey:     dateKey,
-      patient:     patient,
-      doctor:      doctor,
-      amount:      totalAmount.toFixed(2),
-      method:      method,
-      cashAmount:  isSplit ? cashAmt.toFixed(2) : (method==='Cash' ? singleAmt.toFixed(2) : '0'),
-      gpayAmount:  isSplit ? gpayAmt.toFixed(2) : (method==='GPay' ? singleAmt.toFixed(2) : '0'),
-      collectedBy: collectedBy
-    };
-
+    if(isPast&&!pastVal){errEl.textContent='Please select a past date.';errEl.style.display='block';return;}
+    var now=isPast?new Date(pastVal+'T12:00:00'):new Date();
+    var opts={timeZone:'Asia/Kolkata'};
+    var timestamp=isPast?now.toLocaleDateString('en-IN',opts)+', 12:00:00 (past entry)':now.toLocaleString('en-IN',opts);
+    var dateKey=now.toLocaleDateString('en-IN',opts);
+    var entry={timestamp:timestamp,dateKey:dateKey,patient:patient,doctor:doctor,amount:totalAmount.toFixed(2),method:method,
+      cashAmount:isSplit?cashAmt.toFixed(2):(method==='Cash'?singleAmt.toFixed(2):'0'),
+      gpayAmount:isSplit?gpayAmt.toFixed(2):(method==='GPay'?singleAmt.toFixed(2):'0'),
+      collectedBy:collectedBy};
     var btn=document.getElementById('submitBtn');
-    btn.disabled=true; btn.textContent='Saving...';
+    btn.disabled=true;btn.textContent='Saving...';
     entries.unshift(entry);
-    try { localStorage.setItem('clinic_entries', JSON.stringify(entries)); } catch(ex) {}
-
-    // Add new doctor to local cache immediately
-    if (doctorNames.indexOf(doctor) === -1) doctorNames.push(doctor);
-
-    if (sheetUrl) {
-      var params = Object.keys(entry).map(function(k){
-        return encodeURIComponent(k)+'='+encodeURIComponent(entry[k]);
-      }).join('&');
-      var saveUrl = sheetUrl+'?action=save&'+params;
-      var img = new Image();
-      img.src = saveUrl;
-      setTimeout(function(){
-        toast('\u2713 Saved and synced to Google Sheets');
-        resetForm(btn);
-      }, 1500);
-    } else {
-      toast('Saved locally \u2014 connect Google Sheets in Settings');
-      resetForm(btn);
-    }
+    try{localStorage.setItem('clinic_entries',JSON.stringify(entries));}catch(ex){}
+    if(doctorNames.indexOf(doctor)===-1)doctorNames.push(doctor);
+    if(sheetUrl){
+      var params=Object.keys(entry).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(entry[k]);}).join('&');
+      var img=new Image(); img.src=sheetUrl+'?action=save&'+params;
+      setTimeout(function(){toast('\u2713 Saved and synced to Google Sheets');resetForm(btn);},1500);
+    } else {toast('Saved locally \u2014 connect Google Sheets in Settings');resetForm(btn);}
   }
 
-  function resetForm(btn) {
-    btn.disabled=false; btn.textContent='Save & Sync to Google Sheets';
-    ['patientName','doctorName','amountPaid','cashAmount','gpayAmount','collectedBy'].forEach(function(id){
-      document.getElementById(id).value='';
-    });
-    document.getElementById('doctorGhost').innerHTML = '';
+  function resetForm(btn){
+    btn.disabled=false;btn.textContent='Save & Sync to Google Sheets';
+    ['patientName','doctorName','amountPaid','cashAmount','gpayAmount','collectedBy'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('doctorGhost').innerHTML='';
     document.getElementById('paymentMethod').value='';
     document.getElementById('splitRow').classList.remove('show');
     document.getElementById('singleAmountWrap').style.display='block';
@@ -748,218 +651,142 @@
     document.getElementById('pastDateField').classList.remove('show');
   }
 
-  function getTodayKey() {
-    return normaliseDate(new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}));
+  /* ── LOG ── */
+  function getTodayKey(){return normaliseDate(new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}));}
+
+  function applyAllFilters(list, today){
+    var method = document.getElementById('filterMethod').value;
+    var dr = viewAll ? getDateFilterRange() : {from:'',to:''};
+    var tdN = normaliseDate(today);
+    // Date scope
+    if(!viewAll) list = list.filter(function(e){ return normaliseDate(e.dateKey)=== tdN; });
+    // Date range (view all)
+    if(viewAll && (dr.from||dr.to)) list = list.filter(function(e){ return inDateRange(e.dateKey, dr); });
+    // Payment method
+    if(method) list = list.filter(function(e){ return e.method===method; });
+    // Doctor
+    if(filterDoctorValue) list = list.filter(function(e){ return e.doctor.toLowerCase().indexOf(filterDoctorValue.toLowerCase())!==-1; });
+    return list;
   }
 
-  function renderLog() {
+  function renderLog(){
     var today=getTodayKey();
     var label=new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'long',year:'numeric'});
     var dr=viewAll?getDateFilterRange():{from:'',to:''};
-    var hasFilter=dr.from||dr.to;
-    var heading = viewAll ? (hasFilter ? 'Filtered entries' : 'All entries') : 'Today \u2014 '+label;
-    var subText  = viewAll ? (hasFilter ? (dr.from||'') + (dr.from&&dr.to?' → ':'') + (dr.to||'') : 'Showing all entries') : "Showing today's entries only";
-    document.getElementById('log-date-heading').textContent = heading;
-    document.getElementById('log-date-sub').textContent = subText;
+    var hasDateFilter=dr.from||dr.to;
+    var hasDrFilter=filterDoctorValue.length>0;
+    var heading=viewAll?(hasDateFilter||hasDrFilter?'Filtered entries':'All entries'):'Today \u2014 '+label;
+    var sub=viewAll?(hasDateFilter?(dr.from||'')+' \u2192 '+(dr.to||''):'Showing all entries'):"Showing today's entries only";
+    document.getElementById('log-date-heading').textContent=heading;
+    document.getElementById('log-date-sub').textContent=sub;
     document.getElementById('log-list').innerHTML='<div class="empty-state"><span class="spinner"></span> Loading...</div>';
-    fetchSheetStats(today);
-    fetchSheetEntries(today);
+    document.getElementById('stat-total').innerHTML='<span class="spinner"></span>';
+    document.getElementById('stat-count').innerHTML='<span class="spinner"></span>';
+    document.getElementById('stat-cash').innerHTML='<span class="spinner"></span>';
+    fetchAndRender(today);
   }
 
-  function fetchSheetEntries(today) {
-    if (!csvUrl) { renderLocalEntries(today); return; }
+  function fetchAndRender(today){
+    if(!csvUrl){renderFromLocal(today);return;}
     fetch(csvUrl+'&t='+Date.now())
       .then(function(r){return r.text();})
       .then(function(csv){
-        var rows=parseCSV(csv), filter=document.getElementById('filterMethod').value;
-        var list=[], tdN=normaliseDate(today);
+        var rows=parseCSV(csv), list=[];
         for(var i=1;i<rows.length;i++){
-          var row=rows[i];
-          if(!row||row.length<5) continue;
+          var row=rows[i]; if(!row||row.length<5)continue;
           var ts=(row[0]||'').replace(/"/g,'').trim();
           var rd=normaliseDate(ts.split(',')[0].trim());
-          if(viewAll||rd===tdN){
-            list.push({
-              timestamp:   ts,
-              dateKey:     rd,
-              isPast:      ts.indexOf('past entry')!==-1,
-              patient:     (row[1]||'').replace(/"/g,'').trim(),
-              doctor:      (row[2]||'').replace(/"/g,'').trim(),
-              amount:      (row[3]||'0').replace(/"/g,'').trim(),
-              method:      (row[4]||'').replace(/"/g,'').trim(),
-              cashAmount:  (row[5]||'0').replace(/"/g,'').trim(),
-              gpayAmount:  (row[6]||'0').replace(/"/g,'').trim(),
-              collectedBy: (row[7]||row[5]||'').replace(/"/g,'').trim()
-            });
-          }
+          list.push({timestamp:ts,dateKey:rd,isPast:ts.indexOf('past entry')!==-1,
+            patient:(row[1]||'').replace(/"/g,'').trim(),doctor:(row[2]||'').replace(/"/g,'').trim(),
+            amount:(row[3]||'0').replace(/"/g,'').trim(),method:(row[4]||'').replace(/"/g,'').trim(),
+            cashAmount:(row[5]||'0').replace(/"/g,'').trim(),gpayAmount:(row[6]||'0').replace(/"/g,'').trim(),
+            collectedBy:(row[7]||row[5]||'').replace(/"/g,'').trim()});
         }
-        list.sort(function(a,b){
-          var ap=a.dateKey.split('/'),bp=b.dateKey.split('/');
-          return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);
-        });
-        if(filter) list=list.filter(function(e){return e.method===filter;});
-        // Apply date range + method filter for stats recalc
-        var dr=viewAll?getDateFilterRange():{from:'',to:''};
-        var methodFilter=filter;
-        if(viewAll && (dr.from||dr.to)){
-          list=list.filter(function(e){ return inDateRange(e.dateKey, dr); });
-        }
-        // Recalculate stats from filtered list
-        var fTotal=0, fCash=0, fCount=0;
-        list.forEach(function(e){
-          var a=parseFloat(e.amount)||0; fTotal+=a; fCount++;
-          if(e.method==='Cash') fCash+=a;
-          else if(e.method==='Split') fCash+=(parseFloat(e.cashAmount)||0);
-        });
-        updateStats(fTotal, fCount, fCash);
-        renderEntryCards(list);
-      })
-      .catch(function(){renderLocalEntries(today);});
+        list.sort(function(a,b){var ap=a.dateKey.split('/'),bp=b.dateKey.split('/');return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);});
+        var filtered=applyAllFilters(list, today);
+        calcStats(filtered);
+        renderEntryCards(filtered);
+      }).catch(function(){renderFromLocal(today);});
   }
 
-  function renderLocalEntries(today) {
-    var filter=document.getElementById('filterMethod').value;
-    var base=viewAll?entries:entries.filter(function(e){
-      return normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''))===normaliseDate(today);
-    });
-    if(filter) base=base.filter(function(e){return e.method===filter;});
-    if(viewAll) {
-      var dr=getDateFilterRange();
-      if(dr.from||dr.to){
-        base=base.filter(function(e){
-          var dk=normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''));
-          return inDateRange(dk, dr);
-        });
-      }
-    }
-    // Recalculate stats from filtered list
-    var fTotal=0, fCash=0;
-    base.forEach(function(e){
-      var a=parseFloat(e.amount)||0; fTotal+=a;
-      if(e.method==='Cash') fCash+=a;
-      else if(e.method==='Split') fCash+=(parseFloat(e.cashAmount)||0);
-    });
-    updateStats(fTotal, base.length, fCash);
-    renderEntryCards(base);
+  function renderFromLocal(today){
+    var filtered=applyAllFilters(entries.slice(), today);
+    calcStats(filtered);
+    renderEntryCards(filtered);
   }
 
-  function renderEntryCards(list) {
+  function calcStats(list){
+    var total=0,cash=0;
+    list.forEach(function(e){
+      var a=parseFloat(e.amount)||0; total+=a;
+      if(e.method==='Cash')cash+=a;
+      else if(e.method==='Split')cash+=(parseFloat(e.cashAmount)||0);
+    });
+    updateStats(total,list.length,cash);
+  }
+
+  function updateStats(total,count,cash){
+    document.getElementById('stat-total').textContent='\u20B9'+parseFloat(total||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+    document.getElementById('stat-count').textContent=count||0;
+    document.getElementById('stat-cash').textContent='\u20B9'+parseFloat(cash||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+  }
+
+  function renderEntryCards(list){
     var el=document.getElementById('log-list');
-    if(!list.length){
-      el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128203;</div>'+(viewAll?'No entries found.':'No entries for today yet.')+'</div>';
-      return;
-    }
+    if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">&#128203;</div>'+(viewAll?'No entries found.':'No entries for today yet.')+'</div>';return;}
     el.innerHTML=list.map(function(e,idx){
       var bc=e.method==='GPay'?'badge-gpay':e.method==='Split'?'badge-split':'badge-cash';
       var delBtn=adminUnlocked?'<button class="delete-btn" onclick="deleteSheetEntry('+idx+')" title="Delete">&#10005;</button>':'';
       var pastBadge=e.isPast?'<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--warn-light);color:var(--warn);margin-left:4px;">Past</span>':'';
       var splitInfo=e.method==='Split'?'<span style="font-size:11px;color:var(--muted);"> Cash \u20B9'+parseFloat(e.cashAmount||0).toLocaleString('en-IN')+' + GPay \u20B9'+parseFloat(e.gpayAmount||0).toLocaleString('en-IN')+'</span>':'';
       var displayTs=e.timestamp.replace(', 12:00:00 (past entry)','').replace('(past entry)','').trim();
-      return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">'+e.patient+
-        '</div><div class="entry-amount">\u20B9'+parseFloat(e.amount).toLocaleString('en-IN')+
-        '</div>'+delBtn+'</div><div class="entry-meta"><span class="badge '+bc+'">'+e.method+'</span>'+splitInfo+' Dr. '+
-        e.doctor+' &nbsp;&middot;&nbsp; '+e.collectedBy+pastBadge+
-        '</div><div class="entry-time">'+displayTs+'</div></div>';
+      return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">'+e.patient+'</div><div class="entry-amount">\u20B9'+parseFloat(e.amount).toLocaleString('en-IN')+'</div>'+delBtn+'</div><div class="entry-meta"><span class="badge '+bc+'">'+e.method+'</span>'+splitInfo+' Dr. '+e.doctor+' &nbsp;&middot;&nbsp; '+e.collectedBy+pastBadge+'</div><div class="entry-time">'+displayTs+'</div></div>';
     }).join('');
   }
 
-  function fetchSheetStats(today) {
-    // Stats are now recalculated inside fetchSheetEntries/renderLocalEntries
-    // after all filters are applied — so this is only used as a loading placeholder
-    if(!csvUrl){ calcLocalStats(today); return; }
-    document.getElementById('stat-total').innerHTML='<span class="spinner"></span>';
-    document.getElementById('stat-count').innerHTML='<span class="spinner"></span>';
-    document.getElementById('stat-cash').innerHTML='<span class="spinner"></span>';
-  }
-
-  function calcLocalStats(today) {
-    var base=viewAll?entries:entries.filter(function(e){
-      return normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''))===normaliseDate(today);
-    });
-    var filter=document.getElementById('filterMethod').value;
-    if(filter) base=base.filter(function(e){return e.method===filter;});
-    if(viewAll){
-      var dr=getDateFilterRange();
-      if(dr.from||dr.to){
-        base=base.filter(function(e){
-          var dk=normaliseDate(e.dateKey||(e.timestamp?e.timestamp.split(',')[0].trim():''));
-          return inDateRange(dk,dr);
-        });
-      }
-    }
-    var total=0,cash=0;
-    base.forEach(function(e){
-      var a=parseFloat(e.amount)||0; total+=a;
-      if(e.method==='Cash') cash+=a;
-      else if(e.method==='Split') cash+=(parseFloat(e.cashAmount)||0);
-    });
-    updateStats(total,base.length,cash);
-  }
-
-  function updateStats(total,count,cash) {
-    document.getElementById('stat-total').textContent='\u20B9'+parseFloat(total||0).toLocaleString('en-IN',{maximumFractionDigits:0});
-    document.getElementById('stat-count').textContent=count||0;
-    document.getElementById('stat-cash').textContent='\u20B9'+parseFloat(cash||0).toLocaleString('en-IN',{maximumFractionDigits:0});
-  }
-
-  function normaliseDate(d) { return (d||'').replace(/(^|\/)(0+)/g,'$1').trim(); }
-
-  function parseCSV(text) {
-    var rows=[];
-    var lines=text.split('\n');
+  function normaliseDate(d){return(d||'').replace(/(^|\/)(0+)/g,'$1').trim();}
+  function parseCSV(text){
+    var rows=[],lines=text.split('\n');
     for(var i=0;i<lines.length;i++){
-      var line=lines[i].trim(); if(!line) continue;
+      var line=lines[i].trim();if(!line)continue;
       var cols=[],cur='',inQ=false;
-      for(var c=0;c<line.length;c++){
-        var ch=line[c];
-        if(ch==='"'){inQ=!inQ;}
-        else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
-        else{cur+=ch;}
-      }
-      cols.push(cur.trim()); rows.push(cols);
+      for(var c=0;c<line.length;c++){var ch=line[c];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else{cur+=ch;}}
+      cols.push(cur.trim());rows.push(cols);
     }
     return rows;
   }
 
-  function saveUrl() {
+  /* ── SETTINGS ── */
+  function saveUrl(){
     var url=document.getElementById('sheetUrl').value.trim();
     var msg=document.getElementById('url-msg');
     if(!url.startsWith('https://script.google.com')){msg.style.color='var(--danger)';msg.textContent='Please paste a valid Apps Script URL.';return;}
     try{localStorage.setItem('clinic_sheet_url',url);}catch(e){}
-    sheetUrl=url; setConnected(true);
-    msg.style.color='var(--accent)'; msg.textContent='URL saved!';
-    toast('Sheet URL saved \u2713');
+    sheetUrl=url;setConnected(true);msg.style.color='var(--accent)';msg.textContent='URL saved!';toast('Sheet URL saved \u2713');
   }
-
-  function saveStaffPin() {
-    var p1=document.getElementById('newStaffPin').value.trim();
-    var p2=document.getElementById('newStaffPinConfirm').value.trim();
+  function saveStaffPin(){
+    var p1=document.getElementById('newStaffPin').value.trim(),p2=document.getElementById('newStaffPinConfirm').value.trim();
     var msg=document.getElementById('staff-pin-msg');
     if(!/^[0-9]{4}$/.test(p1)){msg.style.color='var(--danger)';msg.textContent='PIN must be exactly 4 digits.';return;}
     if(p1!==p2){msg.style.color='var(--danger)';msg.textContent='PINs do not match.';return;}
     try{localStorage.setItem('clinic_staff_pin',p1);}catch(e){}
-    document.getElementById('newStaffPin').value=''; document.getElementById('newStaffPinConfirm').value='';
-    msg.style.color='var(--accent)'; msg.textContent='Staff PIN updated!'; toast('Staff PIN changed \u2713');
+    document.getElementById('newStaffPin').value='';document.getElementById('newStaffPinConfirm').value='';
+    msg.style.color='var(--accent)';msg.textContent='Staff PIN updated!';toast('Staff PIN changed \u2713');
   }
-
-  function saveAdminPin() {
-    var p1=document.getElementById('newAdminPin').value.trim();
-    var p2=document.getElementById('newAdminPinConfirm').value.trim();
+  function saveAdminPin(){
+    var p1=document.getElementById('newAdminPin').value.trim(),p2=document.getElementById('newAdminPinConfirm').value.trim();
     var msg=document.getElementById('admin-pin-msg');
     if(!/^[0-9]{4}$/.test(p1)){msg.style.color='var(--danger)';msg.textContent='PIN must be exactly 4 digits.';return;}
     if(p1!==p2){msg.style.color='var(--danger)';msg.textContent='PINs do not match.';return;}
     try{localStorage.setItem('clinic_admin_pin',p1);}catch(e){}
-    document.getElementById('newAdminPin').value=''; document.getElementById('newAdminPinConfirm').value='';
-    msg.style.color='var(--accent)'; msg.textContent='Admin PIN updated!'; toast('Admin PIN changed \u2713');
+    document.getElementById('newAdminPin').value='';document.getElementById('newAdminPinConfirm').value='';
+    msg.style.color='var(--accent)';msg.textContent='Admin PIN updated!';toast('Admin PIN changed \u2713');
   }
-
-  function deleteSheetEntry(idx) { toast('To delete, remove the row directly from Google Sheets.'); }
-
-  function clearLog() {
-    if(!confirm('Clear all local entries? Your Google Sheet data will not be affected.')) return;
-    entries=[];
-    try{localStorage.removeItem('clinic_entries');}catch(e){}
-    renderLog(); toast('Local log cleared');
+  function deleteSheetEntry(idx){toast('To delete, remove the row directly from Google Sheets.');}
+  function clearLog(){
+    if(!confirm('Clear all local entries? Your Google Sheet data will not be affected.'))return;
+    entries=[];try{localStorage.removeItem('clinic_entries');}catch(e){}
+    renderLog();toast('Local log cleared');
   }
 
   init();
