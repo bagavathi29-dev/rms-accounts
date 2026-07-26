@@ -398,9 +398,22 @@
   /* ════════════════════════════════════
      DOCTOR NAMES — load from sheet CSV
   ════════════════════════════════════ */
+  // Clean a raw doctor string: remove (SELF) tag, drop if it's just "SELF"
+  function cleanDoctorName(name) {
+    var cleaned = (name||'')
+      .replace(/\(\s*SELF\s*\)/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (/^SELF$/i.test(cleaned)) return ''; // pure "SELF" entries aren't real doctor names
+    return cleaned;
+  }
+
   function loadDoctorNames() {
     var local = [];
-    entries.forEach(function(e){ if(e.doctor && local.indexOf(e.doctor)===-1) local.push(e.doctor); });
+    entries.forEach(function(e){
+      var clean = cleanDoctorName(e.doctor);
+      if(clean && local.indexOf(clean)===-1) local.push(clean);
+    });
     doctorNames = local;
     if (!csvUrl) return;
     fetch(csvUrl+'&t='+Date.now())
@@ -408,8 +421,9 @@
       .then(function(csv){
         var rows=parseCSV(csv);
         for(var i=1;i<rows.length;i++){
-          var name=(rows[i][2]||'').replace(/"/g,'').trim();
-          if(name && doctorNames.indexOf(name)===-1) doctorNames.push(name);
+          var raw=(rows[i][2]||'').replace(/"/g,'').trim();
+          var clean=cleanDoctorName(raw);
+          if(clean && doctorNames.indexOf(clean)===-1) doctorNames.push(clean);
         }
         doctorNames.sort();
       }).catch(function(){});
@@ -751,7 +765,8 @@
   function doSaveEntry(entry, btn){
     entries.unshift(entry);
     try{localStorage.setItem('clinic_entries',JSON.stringify(entries));}catch(ex){}
-    if(doctorNames.indexOf(entry.doctor)===-1)doctorNames.push(entry.doctor);
+    var cleanForCache=cleanDoctorName(entry.doctor);
+    if(cleanForCache && doctorNames.indexOf(cleanForCache)===-1)doctorNames.push(cleanForCache);
     if(sheetUrl){
       var params=Object.keys(entry).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(entry[k]);}).join('&');
       var img=new Image(); img.src=sheetUrl+'?action=save&'+params;
