@@ -132,6 +132,20 @@
   .df-item { padding:9px 14px; font-size:13px; color:var(--text); cursor:pointer; }
   .df-item:hover, .df-item.sel { background:var(--accent-light); color:var(--accent-text); }
   .df-match { font-weight:600; }
+
+  /* ── Duplicate warning modal ── */
+  .dup-overlay { display:none; position:fixed; inset:0; background:rgba(26,25,22,0.6); z-index:200; align-items:center; justify-content:center; }
+  .dup-overlay.show { display:flex; }
+  .dup-box { background:var(--surface); border-radius:var(--radius); padding:26px 22px; width:310px; text-align:center; }
+  .dup-icon { font-size:32px; margin-bottom:10px; }
+  .dup-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:8px; }
+  .dup-msg { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:6px; }
+  .dup-detail { font-size:12px; color:var(--warn); background:var(--warn-light); border:1px solid #f0c080; border-radius:var(--radius-sm); padding:8px 12px; margin-bottom:18px; line-height:1.7; text-align:left; }
+  .dup-btns { display:flex; gap:10px; }
+  .dup-btn-yes { flex:1; padding:11px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+  .dup-btn-yes:hover { opacity:0.88; }
+  .dup-btn-no  { flex:1; padding:11px; background:transparent; color:var(--danger); border:1px solid #e8b4b0; border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+  .dup-btn-no:hover { background:var(--danger-light); }
 </style>
 </head>
 <body>
@@ -305,6 +319,21 @@
   </div>
 </div>
 
+<!-- Duplicate Warning Modal -->
+<div class="dup-overlay" id="dupOverlay">
+  <div class="dup-box">
+    <div class="dup-icon">&#9888;&#65039;</div>
+    <div class="dup-title">Duplicate entry detected</div>
+    <div class="dup-msg">A record with the same details already exists today:</div>
+    <div class="dup-detail" id="dupDetail"></div>
+    <div class="dup-msg" style="margin-bottom:16px;">Do you still want to add this entry?</div>
+    <div class="dup-btns">
+      <button class="dup-btn-no"  onclick="dupCancel()">&#10006; No, Cancel</button>
+      <button class="dup-btn-yes" onclick="dupConfirm()">&#10003; Yes, Add</button>
+    </div>
+  </div>
+</div>
+
 <!-- PIN Modal -->
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-box">
@@ -355,6 +384,7 @@
   var dfActiveIdx = -1;
   var dfSuggestions = [];
   var filterDoctorValue = '';
+  var _pendingEntry = null; // holds entry waiting for duplicate confirmation
 
   function getStaffPin(){try{return localStorage.getItem('clinic_staff_pin')||DEFAULT_STAFF_PIN;}catch(e){return DEFAULT_STAFF_PIN;}}
   function getAdminPin() {try{return localStorage.getItem('clinic_admin_pin') ||DEFAULT_ADMIN_PIN; }catch(e){return DEFAULT_ADMIN_PIN; }}
@@ -631,11 +661,80 @@
       cashAmount:isSplit?cashAmt.toFixed(2):(method==='Cash'?singleAmt.toFixed(2):'0'),
       gpayAmount:isSplit?gpayAmt.toFixed(2):(method==='GPay'?singleAmt.toFixed(2):'0'),
       collectedBy:collectedBy};
+
+    // ── Duplicate check: fetch CSV and check today's entries from sheet ──
+    var todayKey=normaliseDate(dateKey);
     var btn=document.getElementById('submitBtn');
-    btn.disabled=true;btn.textContent='Saving...';
+    btn.disabled=true; btn.textContent='Checking...';
+
+    function proceedWithDupCheck(sheetRows){
+      // Combine sheet rows + local entries for duplicate check
+      var allToday=[];
+      sheetRows.forEach(function(row){
+        if(!row||row.length<5)return;
+        var ts=(row[0]||'').replace(/"/g,'').trim();
+        var rd=normaliseDate(ts.split(',')[0].trim());
+        if(rd===todayKey) allToday.push({
+          patient:(row[1]||'').replace(/"/g,'').trim(),
+          doctor:(row[2]||'').replace(/"/g,'').trim(),
+          amount:(row[3]||'0').replace(/"/g,'').trim(),
+          timestamp:ts
+        });
+      });
+      // Also check local entries not yet synced
+      entries.forEach(function(e){
+        if(normaliseDate(e.dateKey)===todayKey) allToday.push(e);
+      });
+
+      var dup=allToday.find(function(e){
+        return e.patient.toLowerCase()===patient.toLowerCase()&&
+               e.doctor.toLowerCase()===doctor.toLowerCase()&&
+               Math.abs(parseFloat(e.amount)-parseFloat(entry.amount))<0.01;
+      });
+
+      if(dup){
+        btn.disabled=false; btn.textContent='Save & Sync to Google Sheets';
+        _pendingEntry=entry;
+        document.getElementById('dupDetail').innerHTML=
+          '<strong>Patient:</strong> '+dup.patient+'<br>'+
+          '<strong>Doctor:</strong> Dr. '+dup.doctor+'<br>'+
+          '<strong>Amount:</strong> ₹'+parseFloat(dup.amount).toLocaleString('en-IN')+'<br>'+
+          '<strong>Time:</strong> '+(dup.timestamp||'').replace(', 12:00:00 (past entry)','').replace('(past entry)','').trim();
+        document.getElementById('dupOverlay').classList.add('show');
+      } else {
+        doSaveEntry(entry, btn);
+      }
+    }
+
+    if(csvUrl){
+      fetch(csvUrl+'&t='+Date.now())
+        .then(function(r){return r.text();})
+        .then(function(csv){ proceedWithDupCheck(parseCSV(csv).slice(1)); })
+        .catch(function(){ proceedWithDupCheck([]); }); // fallback: skip sheet check
+    } else {
+      proceedWithDupCheck([]);
+    }
+  }
+
+  function dupConfirm(){
+    document.getElementById('dupOverlay').classList.remove('show');
+    if(_pendingEntry){
+      var btn=document.getElementById('submitBtn');
+      btn.disabled=true; btn.textContent='Saving...';
+      doSaveEntry(_pendingEntry, btn);
+      _pendingEntry=null;
+    }
+  }
+  function dupCancel(){
+    document.getElementById('dupOverlay').classList.remove('show');
+    _pendingEntry=null;
+    toast('Entry cancelled');
+  }
+
+  function doSaveEntry(entry, btn){
     entries.unshift(entry);
     try{localStorage.setItem('clinic_entries',JSON.stringify(entries));}catch(ex){}
-    if(doctorNames.indexOf(doctor)===-1)doctorNames.push(doctor);
+    if(doctorNames.indexOf(entry.doctor)===-1)doctorNames.push(entry.doctor);
     if(sheetUrl){
       var params=Object.keys(entry).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(entry[k]);}).join('&');
       var img=new Image(); img.src=sheetUrl+'?action=save&'+params;
