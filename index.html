@@ -814,6 +814,8 @@
     return list;
   }
 
+  var _logFetchToken = 0; // incremented on every renderLog call; stale responses are discarded
+
   function renderLog(){
     var today=getTodayKey();
     var label=new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'long',year:'numeric'});
@@ -828,14 +830,17 @@
     document.getElementById('stat-total').innerHTML='<span class="spinner"></span>';
     document.getElementById('stat-count').innerHTML='<span class="spinner"></span>';
     document.getElementById('stat-cash').innerHTML='<span class="spinner"></span>';
-    fetchAndRender(today);
+    _logFetchToken++;
+    fetchAndRender(today, _logFetchToken);
   }
 
-  function fetchAndRender(today){
+  function fetchAndRender(today, myToken){
     if(!csvUrl){renderFromLocal(today);return;}
     fetch(csvUrl+'&t='+Date.now())
       .then(function(r){return r.text();})
       .then(function(csv){
+        // Discard this response if a newer request has been made since
+        if(myToken !== _logFetchToken) return;
         var rows=parseCSV(csv), list=[];
         for(var i=1;i<rows.length;i++){
           var row=rows[i]; if(!row||row.length<5)continue;
@@ -851,7 +856,7 @@
         var filtered=applyAllFilters(list, today);
         calcStats(filtered);
         renderEntryCards(filtered);
-      }).catch(function(){renderFromLocal(today);});
+      }).catch(function(){ if(myToken === _logFetchToken) renderFromLocal(today); });
   }
 
   function renderFromLocal(today){
