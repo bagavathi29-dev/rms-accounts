@@ -34,9 +34,9 @@
   .section-label:first-child { margin-top: 0; }
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
-  .field input, .field select { width: 100%; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; transition: border-color 0.15s; appearance: none; }
-  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,95,63,0.08); }
-  .field input::placeholder { color: var(--hint); }
+  .field input:not([type=checkbox]), .field select { width: 100%; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none; transition: border-color 0.15s; appearance: none; }
+  .field input:not([type=checkbox]):focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(44,95,63,0.08); }
+  .field input:not([type=checkbox])::placeholder { color: var(--hint); }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .submit-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: opacity 0.15s, transform 0.1s; }
   .submit-btn:hover { opacity: 0.9; } .submit-btn:active { transform: scale(0.99); } .submit-btn:disabled { opacity: 0.4; cursor: default; }
@@ -175,7 +175,13 @@
       <input type="text" id="patientName" placeholder="Full name" autocomplete="off" />
     </div>
     <div class="field">
-      <label for="doctorName">Referred doctor</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+        <label for="doctorName" style="margin-bottom:0;">Referred doctor</label>
+        <label class="self-label" id="selfToggle">
+          <input type="checkbox" id="selfCheck" onchange="toggleSelf()" />
+          <span>Self</span>
+        </label>
+      </div>
       <div class="autocomplete-wrap" id="doctorWrap">
         <div class="ac-ghost" id="doctorGhost" aria-hidden="true"></div>
         <input type="text" id="doctorName" placeholder="Dr. name" autocomplete="off" />
@@ -634,10 +640,21 @@
   function setConnected(yes){document.getElementById('dot').className='dot'+(yes?' connected':'');document.getElementById('sync-label').textContent=yes?'Connected':'Not connected';}
   function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
 
+  /* ── SELF checkbox ── */
+  var selfSelected = false;
+
+  function toggleSelf(){
+    selfSelected = document.getElementById('selfCheck').checked;
+  }
+
   /* ── SUBMIT ── */
   function submitEntry(){
     var patient=document.getElementById('patientName').value.trim();
-    var doctor=document.getElementById('doctorName').value.trim();
+    var isSelf=selfSelected;
+    // Strip any existing (SELF) or SELF tag from typed name — checkbox is the only source of truth
+    var doctor=document.getElementById('doctorName').value.trim()
+      .replace(/\s*\(SELF\)\s*/gi,'').replace(/SELF/gi,'').trim();
+    if(isSelf) doctor=doctor?(doctor+' (SELF)'):'SELF';
     var method=document.getElementById('paymentMethod').value;
     var collectedBy=document.getElementById('collectedBy').value.trim();
     var errEl=document.getElementById('form-error');
@@ -746,6 +763,8 @@
     btn.disabled=false;btn.textContent='Save & Sync to Google Sheets';
     ['patientName','doctorName','amountPaid','cashAmount','gpayAmount','collectedBy'].forEach(function(id){document.getElementById(id).value='';});
     document.getElementById('doctorGhost').innerHTML='';
+    selfSelected=false;
+    document.getElementById('selfCheck').checked=false;
     document.getElementById('paymentMethod').value='';
     document.getElementById('splitRow').classList.remove('show');
     document.getElementById('singleAmountWrap').style.display='block';
