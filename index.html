@@ -398,13 +398,15 @@
   /* ════════════════════════════════════
      DOCTOR NAMES — load from sheet CSV
   ════════════════════════════════════ */
-  // Clean a raw doctor string: remove (SELF) tag, drop if it's just "SELF"
+  // Clean a raw doctor string: remove any self-tag variant — (SELF), (S), or bare SELF
   function cleanDoctorName(name) {
     var cleaned = (name||'')
-      .replace(/\(\s*SELF\s*\)/gi, '')
+      .replace(/\(\s*SELF\s*\)/gi, '')   // (SELF)
+      .replace(/\(\s*S\s*\)/gi, '')      // (S)
+      .replace(/\bSELF\b/gi, '')          // bare SELF word
       .replace(/\s+/g, ' ')
       .trim();
-    if (/^SELF$/i.test(cleaned)) return ''; // pure "SELF" entries aren't real doctor names
+    if (!cleaned || /^SELF$/i.test(cleaned) || /^S$/i.test(cleaned)) return ''; // pure self markers aren't real doctor names
     return cleaned;
   }
 
