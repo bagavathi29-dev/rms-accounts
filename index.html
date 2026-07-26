@@ -398,15 +398,16 @@
   /* ════════════════════════════════════
      DOCTOR NAMES — load from sheet CSV
   ════════════════════════════════════ */
-  // Clean a raw doctor string: remove any self-tag variant — (SELF), (S), or bare SELF
+  // Clean a raw doctor string: remove self-tag variants (SELF), (S), SELF, Self.
+  // Note: a bare "S" (no brackets) is NOT touched — could be a real initial.
   function cleanDoctorName(name) {
     var cleaned = (name||'')
       .replace(/\(\s*SELF\s*\)/gi, '')   // (SELF)
       .replace(/\(\s*S\s*\)/gi, '')      // (S)
-      .replace(/\bSELF\b/gi, '')          // bare SELF word
+      .replace(/\bSELF\b/gi, '')          // bare SELF or Self (case-insensitive)
       .replace(/\s+/g, ' ')
       .trim();
-    if (!cleaned || /^SELF$/i.test(cleaned) || /^S$/i.test(cleaned)) return ''; // pure self markers aren't real doctor names
+    if (/^SELF$/i.test(cleaned)) return ''; // leftover pure "SELF" isn't a real doctor name
     return cleaned;
   }
 
@@ -669,7 +670,7 @@
     var isSelf=selfSelected;
     // Checkbox is the only source of truth - strip any self-tag variant already typed, then re-apply
     var doctor=cleanDoctorName(document.getElementById('doctorName').value);
-    if(isSelf) doctor=doctor?(doctor+' (SELF)'):'SELF';
+    if(isSelf) doctor=doctor?(doctor+' (SELF)'):'(SELF)';
     var method=document.getElementById('paymentMethod').value;
     var collectedBy=document.getElementById('collectedBy').value.trim();
     var errEl=document.getElementById('form-error');
