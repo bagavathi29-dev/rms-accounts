@@ -119,6 +119,43 @@
   .date-filter-bar input[type=date]:focus { border-color: var(--accent); }
   .date-filter-clear { font-size:11px; color:var(--accent-text); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; white-space:nowrap; padding:0; text-decoration:underline; }
 
+  /* ── Calendar view (View All) ── */
+  .cal-header { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:12px; }
+  .cal-nav-btn { font-size:16px; color:var(--muted); cursor:pointer; padding:2px 8px; user-select:none; }
+  .cal-nav-btn:hover { color:var(--accent); }
+  .cal-month-label { font-size:14px; font-weight:600; color:var(--text); }
+  .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px; }
+  .cal-weekday { text-align:center; font-size:10px; font-weight:600; color:var(--hint); }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:14px; }
+  .cal-day { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px 2px; text-align:center; cursor:pointer; min-height:44px; transition:all 0.12s; }
+  .cal-day:hover { border-color:var(--accent); }
+  .cal-day.cal-empty { background:transparent; border:none; cursor:default; }
+  .cal-num { font-size:11px; color:var(--muted); }
+  .cal-day.cal-has-data { background:var(--accent-light); border-color:#c4dece; }
+  .cal-day.cal-has-data .cal-num { font-weight:700; color:var(--accent-text); }
+  .cal-count { font-size:9px; font-weight:600; color:var(--accent-text); margin-top:1px; }
+  .cal-amt { font-size:8px; color:var(--accent); }
+  .cal-day.cal-today { border:1.5px solid var(--accent); }
+  .cal-day.cal-selected { background:var(--accent); border-color:var(--accent); }
+  .cal-day.cal-selected .cal-num { color:#fff; }
+  .cal-day.cal-selected .cal-count { color:#fff; }
+  .cal-day.cal-selected .cal-amt { color:#d8ecdf; }
+  .cal-legend { font-size:10px; color:var(--hint); text-align:center; margin-bottom:16px; }
+  .cal-legend-dot { display:inline-block; width:8px; height:8px; background:var(--accent-light); border:1px solid #c4dece; border-radius:2px; margin-right:4px; vertical-align:middle; }
+  .day-summary-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
+  .day-summary-title { font-size:12px; font-weight:600; color:var(--text); margin-bottom:10px; }
+  .day-summary-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .day-summary-stat { text-align:center; }
+  .day-summary-val { font-size:15px; font-weight:700; color:var(--text); }
+  .day-summary-lbl { font-size:9px; color:var(--hint); text-transform:uppercase; letter-spacing:0.05em; }
+  .day-summary-btn { width:100%; padding:10px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+  .day-summary-btn:hover { opacity:0.9; }
+  .cal-actions { display:flex; gap:8px; margin-bottom:8px; }
+  .cal-action-btn { flex:1; padding:10px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; cursor:pointer; }
+  .cal-action-btn:hover { border-color:var(--accent); color:var(--accent-text); }
+  .back-to-cal { font-size:12px; font-weight:600; color:var(--accent-text); background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:4px; margin-bottom:12px; padding:0; }
+  .back-to-cal:hover { text-decoration:underline; }
+
   /* ── Doctor filter (log tab) ── */
   .doctor-filter-wrap { position:relative; margin-bottom:14px; }
   .doctor-filter-wrap input { width:100%; padding:8px 34px 8px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); outline:none; }
@@ -247,38 +284,73 @@
       </div>
       <button id="view-all-btn" style="font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-light);border:none;border-radius:20px;padding:5px 14px;cursor:pointer;">View all</button>
     </div>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-val" id="stat-total">&#8377;0</div><div class="stat-lbl">Total</div></div>
-      <div class="stat-card"><div class="stat-val" id="stat-count">0</div><div class="stat-lbl">Entries</div></div>
-      <div class="stat-card"><div class="stat-val" id="stat-cash">&#8377;0</div><div class="stat-lbl">Cash</div></div>
+
+    <!-- Calendar section: View All landing view -->
+    <div id="calendarSection" style="display:none;">
+      <div class="cal-header">
+        <span class="cal-nav-btn" onclick="navigateCalMonth(-1)">&#8249;</span>
+        <span class="cal-month-label" id="calMonthLabel">Month Year</span>
+        <span class="cal-nav-btn" onclick="navigateCalMonth(1)">&#8250;</span>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-weekday">S</div><div class="cal-weekday">M</div><div class="cal-weekday">T</div>
+        <div class="cal-weekday">W</div><div class="cal-weekday">T</div><div class="cal-weekday">F</div><div class="cal-weekday">S</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend"><span class="cal-legend-dot"></span>has entries &nbsp;&middot;&nbsp; tap a day to view its records</div>
+
+      <div class="day-summary-card" id="daySummaryCard" style="display:none;">
+        <div class="day-summary-title" id="daySummaryTitle">Day selected</div>
+        <div class="day-summary-stats">
+          <div class="day-summary-stat"><div class="day-summary-val" id="daySummaryTotal">&#8377;0</div><div class="day-summary-lbl">Total</div></div>
+          <div class="day-summary-stat"><div class="day-summary-val" id="daySummaryCount">0</div><div class="day-summary-lbl">Cases</div></div>
+          <div class="day-summary-stat"><div class="day-summary-val" id="daySummaryCash">&#8377;0</div><div class="day-summary-lbl">Cash</div></div>
+        </div>
+        <button class="day-summary-btn" onclick="viewDayRecords()">View records for this day</button>
+      </div>
+
+      <div class="cal-actions">
+        <button class="cal-action-btn" onclick="showAllRecordsView()">Show All Records</button>
+        <button class="cal-action-btn" onclick="useFiltersView()">Use Filters</button>
+      </div>
     </div>
 
-    <!-- Date filter: View All only -->
-    <div class="date-filter-bar" id="dateFilterBar">
-      <label>&#128197; From</label>
-      <input type="date" id="filterDateFrom" onchange="renderLog()" />
-      <label>To</label>
-      <input type="date" id="filterDateTo" onchange="renderLog()" />
-      <button class="date-filter-clear" onclick="clearDateFilter()">Clear</button>
-    </div>
+    <!-- List section: Today (always) or View All after explicit retrieval -->
+    <div id="logListSection">
+      <button class="back-to-cal" id="backToCalBtn" style="display:none;" onclick="backToCalendar()">&#8249; Back to calendar</button>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" id="stat-total">&#8377;0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-count">0</div><div class="stat-lbl">Entries</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-cash">&#8377;0</div><div class="stat-lbl">Cash</div></div>
+      </div>
 
-    <!-- Doctor filter: always visible in Log -->
-    <div class="doctor-filter-wrap" id="doctorFilterWrap">
-      <input type="text" id="filterDoctorInput" placeholder="&#128269; Filter by doctor..." autocomplete="off" />
-      <span class="df-icon" id="dfIcon">&#9660;</span>
-      <button class="df-clear-x" id="dfClearX" onclick="clearDoctorFilter()" title="Clear">&#10005;</button>
-      <div class="df-dropdown" id="dfDropdown"></div>
-    </div>
+      <!-- Date filter: View All only -->
+      <div class="date-filter-bar" id="dateFilterBar">
+        <label>&#128197; From</label>
+        <input type="date" id="filterDateFrom" onchange="onListFilterChange()" />
+        <label>To</label>
+        <input type="date" id="filterDateTo" onchange="onListFilterChange()" />
+        <button class="date-filter-clear" onclick="clearDateFilter()">Clear</button>
+      </div>
 
-    <div class="filter-row">
-      <select id="filterMethod" onchange="renderLog()">
-        <option value="">All methods</option>
-        <option value="Cash">Cash only</option>
-        <option value="GPay">GPay only</option>
-        <option value="Split">Split only</option>
-      </select>
+      <!-- Doctor filter: always visible in Log -->
+      <div class="doctor-filter-wrap" id="doctorFilterWrap">
+        <input type="text" id="filterDoctorInput" placeholder="&#128269; Filter by doctor..." autocomplete="off" />
+        <span class="df-icon" id="dfIcon">&#9660;</span>
+        <button class="df-clear-x" id="dfClearX" onclick="clearDoctorFilter()" title="Clear">&#10005;</button>
+        <div class="df-dropdown" id="dfDropdown"></div>
+      </div>
+
+      <div class="filter-row">
+        <select id="filterMethod" onchange="onListFilterChange()">
+          <option value="">All methods</option>
+          <option value="Cash">Cash only</option>
+          <option value="GPay">GPay only</option>
+          <option value="Split">Split only</option>
+        </select>
+      </div>
+      <div id="log-list"></div>
     </div>
-    <div id="log-list"></div>
   </div>
 
   <!-- SETTINGS -->
@@ -390,6 +462,12 @@
   var dfActiveIdx = -1;
   var dfSuggestions = [];
   var filterDoctorValue = '';
+
+  /* ── View All calendar state ── */
+  var viewAllCache = null;        // cached parsed entries, fetched once per View All session
+  var calendarMonthOffset = 0;    // 0 = current month, -1 previous, +1 next (no refetch on navigate)
+  var selectedCalendarDay = null; // normalised d/m/yyyy string, or null
+  var logStage = 'today';         // 'today' | 'calendar' | 'list'
   var _pendingEntry = null; // holds entry waiting for duplicate confirmation
 
   function getStaffPin(){try{return localStorage.getItem('clinic_staff_pin')||DEFAULT_STAFF_PIN;}catch(e){return DEFAULT_STAFF_PIN;}}
@@ -494,7 +572,7 @@
       document.getElementById('dfClearX').classList.toggle('show', filterDoctorValue.length>0);
       document.getElementById('dfIcon').style.display = filterDoctorValue.length>0 ? 'none' : '';
       renderDFDropdown(this.value);
-      renderLog();
+      onListFilterChange();
     });
     inp.addEventListener('focus', function(){ renderDFDropdown(this.value); });
     inp.addEventListener('keydown', function(e){
@@ -537,14 +615,14 @@
     filterDoctorValue=name;
     document.getElementById('dfClearX').classList.add('show');
     document.getElementById('dfIcon').style.display='none';
-    closeDFDropdown(); renderLog();
+    closeDFDropdown(); onListFilterChange();
   }
   function clearDoctorFilter(){
     document.getElementById('filterDoctorInput').value='';
     filterDoctorValue='';
     document.getElementById('dfClearX').classList.remove('show');
     document.getElementById('dfIcon').style.display='';
-    closeDFDropdown(); renderLog();
+    closeDFDropdown(); onListFilterChange();
   }
   function closeDFDropdown(){document.getElementById('dfDropdown').classList.remove('open');dfSuggestions=[];dfActiveIdx=-1;}
 
@@ -555,7 +633,7 @@
   function clearDateFilter(silent){
     document.getElementById('filterDateFrom').value='';
     document.getElementById('filterDateTo').value='';
-    if(!silent) renderLog();
+    if(!silent) onListFilterChange();
   }
   function parseDMY(str){
     var p=(str||'').split('/'); if(p.length<3)return null;
@@ -609,17 +687,41 @@
     document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',['form','log','settings'][i]===name);});
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
     document.getElementById('panel-'+name).classList.add('active');
-    if(name==='log') renderLog();
+    if(name==='log'){
+      if(viewAll){
+        if(viewAllCache){ showCalendarSection(); renderCalendarGrid(); }
+        else { enterViewAllCalendar(); }
+      } else {
+        showTodayListSection();
+        renderLog();
+      }
+    }
     if(name==='form') loadDoctorNames();
+  }
+
+  function showCalendarSection(){
+    logStage='calendar';
+    document.getElementById('calendarSection').style.display='';
+    document.getElementById('logListSection').style.display='none';
+  }
+  function showTodayListSection(){
+    logStage='today';
+    document.getElementById('calendarSection').style.display='none';
+    document.getElementById('logListSection').style.display='';
+    document.getElementById('backToCalBtn').style.display='none';
   }
 
   function toggleViewAll(){
     if(viewAll){
       viewAll=false;
+      viewAllCache=null; selectedCalendarDay=null; calendarMonthOffset=0;
       document.getElementById('view-all-btn').textContent='View all';
       document.getElementById('log-date-sub').textContent="Showing today's entries only";
       document.getElementById('dateFilterBar').classList.remove('show');
-      clearDateFilter(true); renderLog();
+      clearDateFilter(true); clearDoctorFilter();
+      document.getElementById('filterMethod').value='';
+      showTodayListSection();
+      renderLog();
     } else { pendingAction='viewall'; showPinModal('admin'); }
   }
 
@@ -645,7 +747,8 @@
       document.getElementById('view-all-btn').textContent='Today only';
       document.getElementById('log-date-sub').textContent='Showing all entries';
       document.getElementById('dateFilterBar').classList.add('show');
-      renderLog();toast('Admin access granted');
+      enterViewAllCalendar();
+      toast('Admin access granted');
     } else if(action==='settings'&&adminOk){
       adminUnlocked=true;pendingAction=null;
       document.getElementById('pinOverlay').classList.remove('show');doSwitchTab('settings');toast('Admin access granted');
@@ -793,17 +896,10 @@
   /* ── LOG ── */
   function getTodayKey(){return normaliseDate(new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}));}
 
-  function applyAllFilters(list, today){
+  // Applies method + doctor filters only (date scope handled separately by caller)
+  function applyMethodDoctorFilters(list){
     var method = document.getElementById('filterMethod').value;
-    var dr = viewAll ? getDateFilterRange() : {from:'',to:''};
-    var tdN = normaliseDate(today);
-    // Date scope
-    if(!viewAll) list = list.filter(function(e){ return normaliseDate(e.dateKey)=== tdN; });
-    // Date range (view all)
-    if(viewAll && (dr.from||dr.to)) list = list.filter(function(e){ return inDateRange(e.dateKey, dr); });
-    // Payment method
     if(method) list = list.filter(function(e){ return e.method===method; });
-    // Doctor
     if(filterDoctorValue){
       var _isWild=filterDoctorValue.startsWith('*');
       var _q=_isWild?filterDoctorValue.slice(1).toLowerCase():filterDoctorValue.toLowerCase();
@@ -814,18 +910,31 @@
     return list;
   }
 
+  function computeTotals(list){
+    var total=0,cash=0;
+    list.forEach(function(e){
+      var a=parseFloat(e.amount)||0; total+=a;
+      if(e.method==='Cash')cash+=a;
+      else if(e.method==='Split')cash+=(parseFloat(e.cashAmount)||0);
+    });
+    return {total:total, count:list.length, cash:cash};
+  }
+  function calcStats(list){ var t=computeTotals(list); updateStats(t.total,t.count,t.cash); }
+
+  function updateStats(total,count,cash){
+    document.getElementById('stat-total').textContent='\u20B9'+parseFloat(total||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+    document.getElementById('stat-count').textContent=count||0;
+    document.getElementById('stat-cash').textContent='\u20B9'+parseFloat(cash||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+  }
+
+  /* ── TODAY MODE: auto-loads fresh from sheet every time (unchanged behaviour) ── */
   var _logFetchToken = 0; // incremented on every renderLog call; stale responses are discarded
 
   function renderLog(){
     var today=getTodayKey();
     var label=new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'long',year:'numeric'});
-    var dr=viewAll?getDateFilterRange():{from:'',to:''};
-    var hasDateFilter=dr.from||dr.to;
-    var hasDrFilter=filterDoctorValue.length>0;
-    var heading=viewAll?(hasDateFilter||hasDrFilter?'Filtered entries':'All entries'):'Today \u2014 '+label;
-    var sub=viewAll?(hasDateFilter?(dr.from||'')+' \u2192 '+(dr.to||''):'Showing all entries'):"Showing today's entries only";
-    document.getElementById('log-date-heading').textContent=heading;
-    document.getElementById('log-date-sub').textContent=sub;
+    document.getElementById('log-date-heading').textContent='Today \u2014 '+label;
+    document.getElementById('log-date-sub').textContent="Showing today's entries only";
     document.getElementById('log-list').innerHTML='<div class="empty-state"><span class="spinner"></span> Loading...</div>';
     document.getElementById('stat-total').innerHTML='<span class="spinner"></span>';
     document.getElementById('stat-count').innerHTML='<span class="spinner"></span>';
@@ -834,51 +943,195 @@
     fetchAndRender(today, _logFetchToken);
   }
 
+  function parseCsvToEntries(csv){
+    var rows=parseCSV(csv), list=[];
+    for(var i=1;i<rows.length;i++){
+      var row=rows[i]; if(!row||row.length<5)continue;
+      var ts=(row[0]||'').replace(/"/g,'').trim();
+      var rd=normaliseDate(ts.split(',')[0].trim());
+      list.push({timestamp:ts,dateKey:rd,isPast:ts.indexOf('past entry')!==-1,
+        patient:(row[1]||'').replace(/"/g,'').trim(),doctor:(row[2]||'').replace(/"/g,'').trim(),
+        amount:(row[3]||'0').replace(/"/g,'').trim(),method:(row[4]||'').replace(/"/g,'').trim(),
+        cashAmount:(row[5]||'0').replace(/"/g,'').trim(),gpayAmount:(row[6]||'0').replace(/"/g,'').trim(),
+        collectedBy:(row[7]||row[5]||'').replace(/"/g,'').trim()});
+    }
+    list.sort(function(a,b){var ap=a.dateKey.split('/'),bp=b.dateKey.split('/');return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);});
+    return list;
+  }
+
   function fetchAndRender(today, myToken){
     if(!csvUrl){renderFromLocal(today);return;}
     fetch(csvUrl+'&t='+Date.now())
       .then(function(r){return r.text();})
       .then(function(csv){
-        // Discard this response if a newer request has been made since
-        if(myToken !== _logFetchToken) return;
-        var rows=parseCSV(csv), list=[];
-        for(var i=1;i<rows.length;i++){
-          var row=rows[i]; if(!row||row.length<5)continue;
-          var ts=(row[0]||'').replace(/"/g,'').trim();
-          var rd=normaliseDate(ts.split(',')[0].trim());
-          list.push({timestamp:ts,dateKey:rd,isPast:ts.indexOf('past entry')!==-1,
-            patient:(row[1]||'').replace(/"/g,'').trim(),doctor:(row[2]||'').replace(/"/g,'').trim(),
-            amount:(row[3]||'0').replace(/"/g,'').trim(),method:(row[4]||'').replace(/"/g,'').trim(),
-            cashAmount:(row[5]||'0').replace(/"/g,'').trim(),gpayAmount:(row[6]||'0').replace(/"/g,'').trim(),
-            collectedBy:(row[7]||row[5]||'').replace(/"/g,'').trim()});
-        }
-        list.sort(function(a,b){var ap=a.dateKey.split('/'),bp=b.dateKey.split('/');return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);});
-        var filtered=applyAllFilters(list, today);
+        if(myToken !== _logFetchToken) return; // discard stale response
+        var list=parseCsvToEntries(csv);
+        var todayList=list.filter(function(e){return normaliseDate(e.dateKey)===normaliseDate(today);});
+        var filtered=applyMethodDoctorFilters(todayList);
         calcStats(filtered);
         renderEntryCards(filtered);
       }).catch(function(){ if(myToken === _logFetchToken) renderFromLocal(today); });
   }
 
   function renderFromLocal(today){
-    var filtered=applyAllFilters(entries.slice(), today);
+    var todayList=entries.filter(function(e){return normaliseDate(e.dateKey)===normaliseDate(today);});
+    var filtered=applyMethodDoctorFilters(todayList);
     calcStats(filtered);
     renderEntryCards(filtered);
   }
 
-  function calcStats(list){
-    var total=0,cash=0;
-    list.forEach(function(e){
-      var a=parseFloat(e.amount)||0; total+=a;
-      if(e.method==='Cash')cash+=a;
-      else if(e.method==='Split')cash+=(parseFloat(e.cashAmount)||0);
-    });
-    updateStats(total,list.length,cash);
+  // Called when method/doctor/date filters change while a list is showing
+  function onListFilterChange(){
+    if(viewAll && logStage==='list') renderListFromCache();
+    else if(!viewAll) renderLog();
+    // if viewAll && logStage==='calendar', filters aren't visible/interactive yet — nothing to do
   }
 
-  function updateStats(total,count,cash){
-    document.getElementById('stat-total').textContent='\u20B9'+parseFloat(total||0).toLocaleString('en-IN',{maximumFractionDigits:0});
-    document.getElementById('stat-count').textContent=count||0;
-    document.getElementById('stat-cash').textContent='\u20B9'+parseFloat(cash||0).toLocaleString('en-IN',{maximumFractionDigits:0});
+  /* ── VIEW ALL: calendar landing view, cache-based retrieval ── */
+  function enterViewAllCalendar(){
+    showCalendarSection();
+    document.getElementById('calGrid').innerHTML='<div class="empty-state" style="grid-column:1/-1;"><span class="spinner"></span> Loading calendar...</div>';
+    loadViewAllCache();
+  }
+
+  function loadViewAllCache(){
+    if(!csvUrl){
+      viewAllCache=entries.slice(); calendarMonthOffset=0; selectedCalendarDay=null;
+      renderCalendarGrid(); return;
+    }
+    fetch(csvUrl+'&t='+Date.now())
+      .then(function(r){return r.text();})
+      .then(function(csv){
+        viewAllCache=parseCsvToEntries(csv);
+        calendarMonthOffset=0; selectedCalendarDay=null;
+        renderCalendarGrid();
+      })
+      .catch(function(){
+        viewAllCache=entries.slice(); calendarMonthOffset=0; selectedCalendarDay=null;
+        renderCalendarGrid();
+        toast('Could not reach Google Sheet \u2014 showing local data only');
+      });
+  }
+
+  function formatShortAmount(n){
+    n=n||0;
+    if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'k';
+    return Math.round(n).toString();
+  }
+
+  function navigateCalMonth(delta){
+    calendarMonthOffset += delta;
+    renderCalendarGrid();
+  }
+
+  function renderCalendarGrid(){
+    var base=new Date(); base.setDate(1); base.setMonth(base.getMonth()+calendarMonthOffset);
+    var year=base.getFullYear(), month=base.getMonth();
+    var label=base.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    document.getElementById('calMonthLabel').textContent=label;
+
+    var firstDayWeekday=new Date(year,month,1).getDay();
+    var daysInMonth=new Date(year,month+1,0).getDate();
+    var todayNorm=normaliseDate(getTodayKey());
+
+    var agg={};
+    (viewAllCache||[]).forEach(function(e){
+      var p=(e.dateKey||'').split('/'); if(p.length<3) return;
+      var d2=parseInt(p[0]), m2=parseInt(p[1])-1, y2=parseInt(p[2]);
+      if(y2===year && m2===month){
+        if(!agg[d2]) agg[d2]={count:0,total:0};
+        agg[d2].count++; agg[d2].total+=parseFloat(e.amount)||0;
+      }
+    });
+
+    var html='';
+    for(var i=0;i<firstDayWeekday;i++) html+='<div class="cal-day cal-empty"></div>';
+    for(var day=1; day<=daysInMonth; day++){
+      var dateKeyNorm=normaliseDate(day+'/'+(month+1)+'/'+year);
+      var isToday=dateKeyNorm===todayNorm;
+      var isSelected=selectedCalendarDay && dateKeyNorm===normaliseDate(selectedCalendarDay);
+      var a=agg[day];
+      var cls='cal-day'+(isToday?' cal-today':'')+(isSelected?' cal-selected':'')+(a?' cal-has-data':'');
+      var badge=a?('<div class="cal-count">'+a.count+'</div><div class="cal-amt">\u20B9'+formatShortAmount(a.total)+'</div>'):'';
+      html+='<div class="'+cls+'" onclick="selectCalendarDay(\''+dateKeyNorm+'\')"><div class="cal-num">'+day+'</div>'+badge+'</div>';
+    }
+    document.getElementById('calGrid').innerHTML=html;
+
+    if(selectedCalendarDay) updateDaySummaryCard();
+    else document.getElementById('daySummaryCard').style.display='none';
+  }
+
+  function selectCalendarDay(dateKeyNorm){
+    selectedCalendarDay=dateKeyNorm;
+    renderCalendarGrid();
+  }
+
+  function formatDateKeyLong(dk){
+    var p=(dk||'').split('/'); if(p.length<3) return dk;
+    var d=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
+    return d.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  }
+
+  function updateDaySummaryCard(){
+    var dayList=(viewAllCache||[]).filter(function(e){return normaliseDate(e.dateKey)===normaliseDate(selectedCalendarDay);});
+    dayList=applyMethodDoctorFilters(dayList);
+    var t=computeTotals(dayList);
+    document.getElementById('daySummaryTitle').textContent=formatDateKeyLong(selectedCalendarDay)+' selected';
+    document.getElementById('daySummaryTotal').textContent='\u20B9'+t.total.toLocaleString('en-IN',{maximumFractionDigits:0});
+    document.getElementById('daySummaryCount').textContent=t.count;
+    document.getElementById('daySummaryCash').textContent='\u20B9'+t.cash.toLocaleString('en-IN',{maximumFractionDigits:0});
+    document.getElementById('daySummaryCard').style.display='';
+  }
+
+  function viewDayRecords(){ enterListStage(); }
+
+  function showAllRecordsView(){
+    selectedCalendarDay=null;
+    clearDateFilter(true);
+    clearDoctorFilter();
+    document.getElementById('filterMethod').value='';
+    enterListStage();
+  }
+
+  function useFiltersView(){
+    selectedCalendarDay=null;
+    enterListStage();
+  }
+
+  function enterListStage(){
+    logStage='list';
+    document.getElementById('calendarSection').style.display='none';
+    document.getElementById('logListSection').style.display='';
+    document.getElementById('backToCalBtn').style.display='';
+    renderListFromCache();
+  }
+
+  function backToCalendar(){
+    document.getElementById('logListSection').style.display='none';
+    showCalendarSection();
+    renderCalendarGrid();
+  }
+
+  function renderListFromCache(){
+    var list=(viewAllCache||[]).slice();
+    var heading, sub;
+    if(selectedCalendarDay){
+      list=list.filter(function(e){return normaliseDate(e.dateKey)===normaliseDate(selectedCalendarDay);});
+      heading='Records for '+formatDateKeyLong(selectedCalendarDay);
+      sub='Tap "Back to calendar" to pick a different day';
+    } else {
+      var dr=getDateFilterRange();
+      if(dr.from||dr.to) list=list.filter(function(e){return inDateRange(e.dateKey,dr);});
+      var hasDateFilter=dr.from||dr.to;
+      var hasDrFilter=filterDoctorValue.length>0;
+      heading=(hasDateFilter||hasDrFilter)?'Filtered entries':'All entries';
+      sub=hasDateFilter?(dr.from||'')+' \u2192 '+(dr.to||''):'Showing all entries';
+    }
+    list=applyMethodDoctorFilters(list);
+    document.getElementById('log-date-heading').textContent=heading;
+    document.getElementById('log-date-sub').textContent=sub;
+    calcStats(list);
+    renderEntryCards(list);
   }
 
   function renderEntryCards(list){
@@ -936,7 +1189,13 @@
   function clearLog(){
     if(!confirm('Clear all local entries? Your Google Sheet data will not be affected.'))return;
     entries=[];try{localStorage.removeItem('clinic_entries');}catch(e){}
-    renderLog();toast('Local log cleared');
+    if(viewAll){
+      if(logStage==='list') renderListFromCache();
+      if(!csvUrl){ loadViewAllCache(); } // local-only fallback mode: refresh cache/calendar too
+    } else {
+      renderLog();
+    }
+    toast('Local log cleared');
   }
 
   init();
