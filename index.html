@@ -225,6 +225,14 @@
         <div class="ac-dropdown" id="doctorDropdown"></div>
       </div>
     </div>
+    <div class="field">
+      <label for="consultant">Consultant</label>
+      <select id="consultant">
+        <option value="">Select consultant...</option>
+        <option value="Dr.Adaikkappan">Dr.Adaikkappan</option>
+        <option value="Dr.Muthiah">Dr.Muthiah</option>
+      </select>
+    </div>
     <div class="section-label">Payment details</div>
     <div class="grid2">
       <div class="field" id="singleAmountWrap">
@@ -776,6 +784,7 @@
     if(isSelf) doctor=doctor?(doctor+' (SELF)'):'(SELF)';
     var method=document.getElementById('paymentMethod').value;
     var collectedBy=document.getElementById('collectedBy').value.trim();
+    var consultant=document.getElementById('consultant').value;
     var errEl=document.getElementById('form-error');
     var isSplit=method==='Split';
     var cashAmt=parseFloat(document.getElementById('cashAmount').value)||0;
@@ -796,7 +805,7 @@
     var entry={timestamp:timestamp,dateKey:dateKey,patient:patient,doctor:doctor,amount:totalAmount.toFixed(2),method:method,
       cashAmount:isSplit?cashAmt.toFixed(2):(method==='Cash'?singleAmt.toFixed(2):'0'),
       gpayAmount:isSplit?gpayAmt.toFixed(2):(method==='GPay'?singleAmt.toFixed(2):'0'),
-      collectedBy:collectedBy};
+      collectedBy:collectedBy, consultant:consultant};
 
     // ── Duplicate check: fetch CSV and check today's entries from sheet ──
     var todayKey=normaliseDate(dateKey);
@@ -886,6 +895,7 @@
     selfSelected=false;
     document.getElementById('selfCheck').checked=false;
     document.getElementById('paymentMethod').value='';
+    document.getElementById('consultant').value='';
     document.getElementById('splitRow').classList.remove('show');
     document.getElementById('singleAmountWrap').style.display='block';
     document.getElementById('pastDateCheck').checked=false;
@@ -953,7 +963,8 @@
         patient:(row[1]||'').replace(/"/g,'').trim(),doctor:(row[2]||'').replace(/"/g,'').trim(),
         amount:(row[3]||'0').replace(/"/g,'').trim(),method:(row[4]||'').replace(/"/g,'').trim(),
         cashAmount:(row[5]||'0').replace(/"/g,'').trim(),gpayAmount:(row[6]||'0').replace(/"/g,'').trim(),
-        collectedBy:(row[7]||row[5]||'').replace(/"/g,'').trim()});
+        collectedBy:(row[7]||row[5]||'').replace(/"/g,'').trim(),
+        consultant:(row[8]||'').replace(/"/g,'').trim()});
     }
     list.sort(function(a,b){var ap=a.dateKey.split('/'),bp=b.dateKey.split('/');return new Date(bp[2],bp[1]-1,bp[0])-new Date(ap[2],ap[1]-1,ap[0]);});
     return list;
@@ -1143,7 +1154,8 @@
       var pastBadge=e.isPast?'<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--warn-light);color:var(--warn);margin-left:4px;">Past</span>':'';
       var splitInfo=e.method==='Split'?'<span style="font-size:11px;color:var(--muted);"> Cash \u20B9'+parseFloat(e.cashAmount||0).toLocaleString('en-IN')+' + GPay \u20B9'+parseFloat(e.gpayAmount||0).toLocaleString('en-IN')+'</span>':'';
       var displayTs=e.timestamp.replace(', 12:00:00 (past entry)','').replace('(past entry)','').trim();
-      return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">'+e.patient+'</div><div class="entry-amount">\u20B9'+parseFloat(e.amount).toLocaleString('en-IN')+'</div>'+delBtn+'</div><div class="entry-meta"><span class="badge '+bc+'">'+e.method+'</span>'+splitInfo+' Dr. '+e.doctor+' &nbsp;&middot;&nbsp; '+e.collectedBy+pastBadge+'</div><div class="entry-time">'+displayTs+'</div></div>';
+      var consultantInfo=e.consultant?(' &nbsp;&middot;&nbsp; Consultant: '+e.consultant):'';
+      return '<div class="entry-card"><div class="entry-top" style="gap:8px;"><div class="entry-name" style="flex:1;">'+e.patient+'</div><div class="entry-amount">\u20B9'+parseFloat(e.amount).toLocaleString('en-IN')+'</div>'+delBtn+'</div><div class="entry-meta"><span class="badge '+bc+'">'+e.method+'</span>'+splitInfo+' Dr. '+e.doctor+' &nbsp;&middot;&nbsp; '+e.collectedBy+consultantInfo+pastBadge+'</div><div class="entry-time">'+displayTs+'</div></div>';
     }).join('');
   }
 
